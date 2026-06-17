@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Centralisation Commandes — Aperçu</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { font-family: 'Inter', system-ui, sans-serif; }
+  .screen { display: none; }
+  .screen.active { display: block; }
+  .nav-btn { cursor: pointer; }
+</style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+<!-- NAV DE DÉMO -->
+<div class="fixed top-0 left-0 right-0 z-50 bg-gray-900 text-white text-xs flex gap-1 px-3 py-2 overflow-x-auto">
+  <span class="text-gray-400 mr-2">Aperçu :</span>
+  <button onclick="show('home')" class="nav-btn px-3 py-1 rounded bg-gray-700 hover:bg-gray-600">Accueil</button>
+  <button onclick="show('dashboard')" class="nav-btn px-3 py-1 rounded bg-gray-700 hover:bg-gray-600">Dashboard Restaurant</button>
+  <button onclick="show('form')" class="nav-btn px-3 py-1 rounded bg-gray-700 hover:bg-gray-600">Formulaire ajout</button>
+  <button onclick="show('manager')" class="nav-btn px-3 py-1 rounded bg-gray-700 hover:bg-gray-600">Vue FNB Manager</button>
+  <button onclick="show('catalog')" class="nav-btn px-3 py-1 rounded bg-gray-700 hover:bg-gray-600">Catalogue</button>
+</div>
+<div class="h-10"></div>
+
+<!-- ============================================================ -->
+<!-- ÉCRAN 1 : ACCUEIL -->
+<!-- ============================================================ -->
+<div id="screen-home" class="screen active">
+  <div class="min-h-screen bg-gray-50 flex items-center justify-center px-4 pt-10">
+    <div class="max-w-2xl w-full">
+      <div class="text-center mb-10">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">Centralisation des Commandes</h1>
+        <p class="text-gray-500">Sélectionnez votre restaurant pour accéder à votre espace</p>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <button onclick="show('dashboard')" class="bg-white rounded-xl shadow-sm border-2 p-6 text-left hover:shadow-md transition-all" style="border-color:#3B82F6">
+          <div class="w-10 h-10 rounded-full mb-4 flex items-center justify-center text-white font-bold text-lg" style="background:#3B82F6">T</div>
+          <h2 class="text-lg font-semibold text-gray-900">Tadao</h2>
+          <p class="text-sm text-gray-500 mt-1">Accéder à mes commandes</p>
+        </button>
+        <button onclick="show('dashboard')" class="bg-white rounded-xl shadow-sm border-2 p-6 text-left hover:shadow-md transition-all" style="border-color:#10B981">
+          <div class="w-10 h-10 rounded-full mb-4 flex items-center justify-center text-white font-bold text-lg" style="background:#10B981">M</div>
+          <h2 class="text-lg font-semibold text-gray-900">Malman</h2>
+          <p class="text-sm text-gray-500 mt-1">Accéder à mes commandes</p>
+        </button>
+        <button onclick="show('dashboard')" class="bg-white rounded-xl shadow-sm border-2 p-6 text-left hover:shadow-md transition-all" style="border-color:#F59E0B">
+          <div class="w-10 h-10 rounded-full mb-4 flex items-center justify-center text-white font-bold text-lg" style="background:#F59E0B">L</div>
+          <h2 class="text-lg font-semibold text-gray-900">La Terrasse</h2>
+          <p class="text-sm text-gray-500 mt-1">Accéder à mes commandes</p>
+        </button>
+        <button onclick="show('dashboard')" class="bg-white rounded-xl shadow-sm border-2 p-6 text-left hover:shadow-md transition-all" style="border-color:#8B5CF6">
+          <div class="w-10 h-10 rounded-full mb-4 flex items-center justify-center text-white font-bold text-lg" style="background:#8B5CF6">I</div>
+          <h2 class="text-lg font-semibold text-gray-900">Itaca</h2>
+          <p class="text-sm text-gray-500 mt-1">Accéder à mes commandes</p>
+        </button>
+        <button onclick="show('manager')" class="bg-white rounded-xl shadow-sm border-2 p-6 text-left hover:shadow-md transition-all sm:col-span-2" style="border-color:#EF4444">
+          <div class="w-10 h-10 rounded-full mb-4 flex items-center justify-center text-white font-bold text-lg" style="background:#EF4444">F</div>
+          <h2 class="text-lg font-semibold text-gray-900">FNB Manager</h2>
+          <p class="text-sm text-gray-500 mt-1">Vue consolidée de tous les restaurants</p>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- ÉCRAN 2 : DASHBOARD RESTAURANT (La Terrasse) -->
+<!-- ============================================================ -->
+<div id="screen-dashboard" class="screen">
+  <!-- Header -->
+  <header class="bg-white shadow-sm border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <span class="text-xl font-bold text-gray-900">Centralisation Commandes</span>
+        <span class="text-gray-300">|</span>
+        <div class="flex items-center gap-2">
+          <div class="w-3 h-3 rounded-full" style="background:#F59E0B"></div>
+          <span class="font-medium text-gray-700">La Terrasse</span>
+        </div>
+      </div>
+      <nav class="flex items-center gap-4">
+        <a href="#" class="text-sm font-medium text-gray-600">Mon tableau de bord</a>
+        <a href="#" onclick="show('catalog'); return false" class="text-sm font-medium text-gray-600">Catalogue</a>
+        <button onclick="show('home')" class="text-sm font-medium text-red-500">Changer</button>
+      </nav>
+    </div>
+  </header>
+
+  <div class="max-w-3xl mx-auto px-4 py-6">
+    <!-- Card résumé -->
+    <div class="rounded-xl p-5 mb-6 text-white" style="background:#F59E0B">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-xl font-bold">La Terrasse</h1>
+          <p class="text-sm opacity-80">Semaine 2026-W25 — 5 articles</p>
+        </div>
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/30 text-white">Brouillon</span>
+      </div>
+      <div class="mt-4 grid grid-cols-2 gap-3">
+        <div class="bg-white/20 rounded-lg p-3">
+          <div class="text-xs opacity-80">Rossi (vendredi)</div>
+          <div class="font-bold text-lg">3j 14h</div>
+          <div class="text-xs opacity-70">3 articles</div>
+        </div>
+        <div class="bg-white/20 rounded-lg p-3">
+          <div class="text-xs opacity-80">Prodacteur (mercredi)</div>
+          <div class="font-bold text-lg">1j 8h</div>
+          <div class="text-xs opacity-70">2 articles</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filtres & boutons -->
+    <div class="flex items-center justify-between mb-4">
+      <div class="flex gap-2">
+        <button class="px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-900 text-white">Tous</button>
+        <button class="px-3 py-1.5 rounded-lg text-sm font-medium bg-white text-gray-600 border border-gray-200">Rossi</button>
+        <button class="px-3 py-1.5 rounded-lg text-sm font-medium bg-white text-gray-600 border border-gray-200">Prodacteur</button>
+      </div>
+      <div class="flex gap-2">
+        <button class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium">Valider la commande</button>
+        <button onclick="show('form')" class="px-4 py-2 rounded-lg text-sm font-medium text-white" style="background:#F59E0B">+ Ajouter</button>
+      </div>
+    </div>
+
+    <!-- Liste articles -->
+    <div class="space-y-2">
+      <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider px-1 mb-2 mt-4">Rossi — Boissons</h3>
+
+      <div class="bg-white rounded-lg border border-gray-200 px-4 py-3 flex items-center justify-between">
+        <div>
+          <div class="font-medium text-gray-900 text-sm">Perrier 75cl</div>
+          <div class="text-xs text-gray-500">6 bouteille</div>
+        </div>
+        <div class="flex gap-2">
+          <button class="text-xs px-2.5 py-1 bg-gray-100 text-gray-600 rounded-md">Modifier</button>
+          <button class="text-xs px-2.5 py-1 bg-red-50 text-red-600 rounded-md">Supprimer</button>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-lg border border-gray-200 px-4 py-3 flex items-center justify-between">
+        <div>
+          <div class="font-medium text-gray-900 text-sm">Coca-Cola Zero</div>
+          <div class="text-xs text-gray-500">2 carton</div>
+        </div>
+        <div class="flex gap-2">
+          <button class="text-xs px-2.5 py-1 bg-gray-100 text-gray-600 rounded-md">Modifier</button>
+          <button class="text-xs px-2.5 py-1 bg-red-50 text-red-600 rounded-md">Supprimer</button>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-lg border border-gray-200 px-4 py-3 flex items-center justify-between">
+        <div>
+          <div class="font-medium text-gray-900 text-sm">Chateldon 33cl</div>
+          <div class="text-xs text-gray-500">4 bouteille · Pour la terrasse VIP</div>
+        </div>
+        <div class="flex gap-2">
+          <button class="text-xs px-2.5 py-1 bg-gray-100 text-gray-600 rounded-md">Modifier</button>
+          <button class="text-xs px-2.5 py-1 bg-red-50 text-red-600 rounded-md">Supprimer</button>
+        </div>
+      </div>
+
+      <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider px-1 mb-2 mt-4">Prodacteur — Café, Sirops, Consommables</h3>
+
+      <div class="bg-white rounded-lg border border-gray-200 px-4 py-3 flex items-center justify-between">
+        <div>
+          <div class="font-medium text-gray-900 text-sm">Sirop Menthe Maison Meneaux</div>
+          <div class="text-xs text-gray-500">3 bouteille</div>
+        </div>
+        <div class="flex gap-2">
+          <button class="text-xs px-2.5 py-1 bg-gray-100 text-gray-600 rounded-md">Modifier</button>
+          <button class="text-xs px-2.5 py-1 bg-red-50 text-red-600 rounded-md">Supprimer</button>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-lg border border-gray-200 px-4 py-3 flex items-center justify-between">
+        <div>
+          <div class="font-medium text-gray-900 text-sm">Café expresso</div>
+          <div class="text-xs text-gray-500">2 kg</div>
+        </div>
+        <div class="flex gap-2">
+          <button class="text-xs px-2.5 py-1 bg-gray-100 text-gray-600 rounded-md">Modifier</button>
+          <button class="text-xs px-2.5 py-1 bg-red-50 text-red-600 rounded-md">Supprimer</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- ÉCRAN 3 : FORMULAIRE AJOUT -->
+<!-- ============================================================ -->
+<div id="screen-form" class="screen">
+  <header class="bg-white shadow-sm border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <span class="text-xl font-bold text-gray-900">Centralisation Commandes</span>
+        <span class="text-gray-300">|</span>
+        <div class="flex items-center gap-2">
+          <div class="w-3 h-3 rounded-full" style="background:#F59E0B"></div>
+          <span class="font-medium text-gray-700">La Terrasse</span>
+        </div>
+      </div>
+      <button onclick="show('dashboard')" class="text-sm font-medium text-red-500">Changer</button>
+    </div>
+  </header>
+
+  <div class="max-w-3xl mx-auto px-4 py-6">
+    <!-- Card résumé petite -->
+    <div class="rounded-xl p-4 mb-4 text-white flex items-center justify-between" style="background:#F59E0B">
+      <div>
+        <h1 class="text-lg font-bold">La Terrasse</h1>
+        <p class="text-sm opacity-80">Semaine 2026-W25 — 5 articles</p>
+      </div>
+      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/30 text-white">Brouillon</span>
+    </div>
+
+    <!-- Formulaire ouvert -->
+    <div class="bg-white rounded-xl border border-gray-200 p-5 mb-5 shadow-sm">
+      <h3 class="font-semibold text-gray-900 mb-4">Nouvel article</h3>
+      <div class="space-y-4">
+        <!-- Fournisseur -->
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Fournisseur</label>
+          <div class="flex gap-2">
+            <button class="flex-1 py-2 rounded-lg text-sm font-medium border bg-gray-900 text-white border-gray-900">Rossi</button>
+            <button class="flex-1 py-2 rounded-lg text-sm font-medium border bg-white text-gray-600 border-gray-200">Prodacteur</button>
+          </div>
+        </div>
+        <!-- Catalogue -->
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Produit du catalogue</label>
+          <select class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-500">
+            <option>— Choisir dans le catalogue —</option>
+            <optgroup label="Eaux">
+              <option>Perrier 75cl</option>
+              <option>Perrier 33cl</option>
+              <option>Chateldon 75cl</option>
+              <option>Chateldon 33cl</option>
+              <option>San Pellegrino</option>
+            </optgroup>
+            <optgroup label="Sodas">
+              <option>Coca-Cola</option>
+              <option selected>Coca-Cola Zero</option>
+            </optgroup>
+            <optgroup label="Mixers">
+              <option>Tonic Fever Tree</option>
+            </optgroup>
+            <optgroup label="Bières">
+              <option>Heineken 33cl</option>
+            </optgroup>
+          </select>
+        </div>
+        <!-- Nom produit -->
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Nom du produit *</label>
+          <input type="text" value="Coca-Cola Zero" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2" style="--tw-ring-color:#F59E0B">
+        </div>
+        <!-- Qté + unité -->
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Quantité *</label>
+            <input type="number" value="3" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Unité</label>
+            <select class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+              <option>bouteille</option>
+              <option selected>carton</option>
+              <option>kg</option>
+              <option>litre</option>
+              <option>paquet</option>
+            </select>
+          </div>
+        </div>
+        <!-- Notes -->
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Notes (optionnel)</label>
+          <input type="text" placeholder="Précisions, variante..." class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-400">
+        </div>
+        <!-- Boutons -->
+        <div class="flex gap-2 pt-1">
+          <button onclick="show('dashboard')" class="flex-1 py-2 rounded-lg text-sm font-semibold text-white" style="background:#F59E0B">Ajouter</button>
+          <button onclick="show('dashboard')" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium">Annuler</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- ÉCRAN 4 : VUE FNB MANAGER -->
+<!-- ============================================================ -->
+<div id="screen-manager" class="screen">
+  <header class="bg-white shadow-sm border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <span class="text-xl font-bold text-gray-900">Centralisation Commandes</span>
+        <span class="text-gray-300">|</span>
+        <div class="flex items-center gap-2">
+          <div class="w-3 h-3 rounded-full" style="background:#EF4444"></div>
+          <span class="font-medium text-gray-700">FNB Manager</span>
+        </div>
+      </div>
+      <button onclick="show('home')" class="text-sm font-medium text-red-500">Changer</button>
+    </div>
+  </header>
+
+  <div class="max-w-5xl mx-auto px-4 py-6">
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">Vue FNB Manager</h1>
+        <p class="text-gray-500 text-sm mt-1">Commandes consolidées de tous les restaurants</p>
+      </div>
+      <div class="flex gap-2">
+        <button class="px-3 py-2 bg-blue-50 text-blue-700 border border-blue-200 rounded-lg text-sm font-medium">Export Rossi CSV</button>
+        <button class="px-3 py-2 bg-green-50 text-green-700 border border-green-200 rounded-lg text-sm font-medium">Export Prodacteur CSV</button>
+      </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="flex flex-wrap gap-3 mb-6">
+      <select class="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white">
+        <option>2026-W25</option>
+        <option>2026-W24</option>
+      </select>
+      <div class="flex gap-2">
+        <button class="px-3 py-2 rounded-lg text-sm font-medium border bg-gray-900 text-white border-gray-900">Tous fournisseurs</button>
+        <button class="px-3 py-2 rounded-lg text-sm font-medium border bg-white text-gray-600 border-gray-200">Rossi</button>
+        <button class="px-3 py-2 rounded-lg text-sm font-medium border bg-white text-gray-600 border-gray-200">Prodacteur</button>
+      </div>
+    </div>
+
+    <!-- Statut par restaurant -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+      <div class="bg-white rounded-xl border border-gray-200 p-4">
+        <div class="flex items-center gap-2 mb-2">
+          <div class="w-3 h-3 rounded-full" style="background:#3B82F6"></div>
+          <span class="font-medium text-sm text-gray-800">Tadao</span>
+        </div>
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">Validée</span>
+        <div class="text-xs text-gray-500 mt-2">4 articles</div>
+      </div>
+      <div class="bg-white rounded-xl border border-gray-200 p-4">
+        <div class="flex items-center gap-2 mb-2">
+          <div class="w-3 h-3 rounded-full" style="background:#10B981"></div>
+          <span class="font-medium text-sm text-gray-800">Malman</span>
+        </div>
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">Brouillon</span>
+        <div class="text-xs text-gray-500 mt-2">2 articles</div>
+        <button class="mt-2 text-xs px-2 py-1 bg-green-50 text-green-700 rounded-md w-full">Marquer envoyée</button>
+      </div>
+      <div class="bg-white rounded-xl border border-gray-200 p-4">
+        <div class="flex items-center gap-2 mb-2">
+          <div class="w-3 h-3 rounded-full" style="background:#F59E0B"></div>
+          <span class="font-medium text-sm text-gray-800">La Terrasse</span>
+        </div>
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">Brouillon</span>
+        <div class="text-xs text-gray-500 mt-2">5 articles</div>
+        <button class="mt-2 text-xs px-2 py-1 bg-green-50 text-green-700 rounded-md w-full">Marquer envoyée</button>
+      </div>
+      <div class="bg-white rounded-xl border border-gray-200 p-4">
+        <div class="flex items-center gap-2 mb-2">
+          <div class="w-3 h-3 rounded-full" style="background:#8B5CF6"></div>
+          <span class="font-medium text-sm text-gray-800">Itaca</span>
+        </div>
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">Envoyée</span>
+        <div class="text-xs text-gray-500 mt-2">6 articles</div>
+      </div>
+    </div>
+
+    <!-- Totaux consolidés -->
+    <div class="bg-white rounded-xl border border-gray-200 overflow-hidden mb-6">
+      <div class="px-5 py-4 border-b border-gray-100">
+        <h2 class="font-semibold text-gray-900">Totaux consolidés</h2>
+        <p class="text-xs text-gray-500 mt-0.5">Quantités totales à commander par produit</p>
+      </div>
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="text-left px-5 py-3 font-medium text-gray-600 text-xs uppercase tracking-wider">Produit</th>
+            <th class="text-right px-4 py-3 font-medium text-gray-600 text-xs uppercase tracking-wider">Qté totale</th>
+            <th class="text-left px-4 py-3 font-medium text-gray-600 text-xs uppercase tracking-wider">Fournisseur</th>
+            <th class="text-left px-4 py-3 font-medium text-gray-600 text-xs uppercase tracking-wider">Restaurants</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          <tr class="hover:bg-gray-50">
+            <td class="px-5 py-3 font-medium text-gray-900">Café expresso</td>
+            <td class="px-4 py-3 text-right font-semibold">8 <span class="text-gray-400 font-normal">kg</span></td>
+            <td class="px-4 py-3"><span class="inline-flex px-2 py-0.5 rounded text-xs font-medium bg-green-50 text-green-700">Prodacteur</span></td>
+            <td class="px-4 py-3"><div class="flex flex-wrap gap-1"><span class="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">Tadao</span><span class="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">La Terrasse</span><span class="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">Itaca</span></div></td>
+          </tr>
+          <tr class="hover:bg-gray-50">
+            <td class="px-5 py-3 font-medium text-gray-900">Chateldon 33cl</td>
+            <td class="px-4 py-3 text-right font-semibold">12 <span class="text-gray-400 font-normal">bouteille</span></td>
+            <td class="px-4 py-3"><span class="inline-flex px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700">Rossi</span></td>
+            <td class="px-4 py-3"><div class="flex flex-wrap gap-1"><span class="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">Tadao</span><span class="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">La Terrasse</span><span class="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">Itaca</span></div></td>
+          </tr>
+          <tr class="hover:bg-gray-50">
+            <td class="px-5 py-3 font-medium text-gray-900">Coca-Cola Zero</td>
+            <td class="px-4 py-3 text-right font-semibold">7 <span class="text-gray-400 font-normal">carton</span></td>
+            <td class="px-4 py-3"><span class="inline-flex px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700">Rossi</span></td>
+            <td class="px-4 py-3"><div class="flex flex-wrap gap-1"><span class="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">Malman</span><span class="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">La Terrasse</span><span class="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">Itaca</span></div></td>
+          </tr>
+          <tr class="hover:bg-gray-50">
+            <td class="px-5 py-3 font-medium text-gray-900">Perrier 75cl</td>
+            <td class="px-4 py-3 text-right font-semibold">18 <span class="text-gray-400 font-normal">bouteille</span></td>
+            <td class="px-4 py-3"><span class="inline-flex px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700">Rossi</span></td>
+            <td class="px-4 py-3"><div class="flex flex-wrap gap-1"><span class="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">Tadao</span><span class="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">Malman</span><span class="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">La Terrasse</span><span class="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">Itaca</span></div></td>
+          </tr>
+          <tr class="hover:bg-gray-50">
+            <td class="px-5 py-3 font-medium text-gray-900">Sirop Menthe Maison Meneaux</td>
+            <td class="px-4 py-3 text-right font-semibold">5 <span class="text-gray-400 font-normal">bouteille</span></td>
+            <td class="px-4 py-3"><span class="inline-flex px-2 py-0.5 rounded text-xs font-medium bg-green-50 text-green-700">Prodacteur</span></td>
+            <td class="px-4 py-3"><div class="flex flex-wrap gap-1"><span class="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">Tadao</span><span class="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">La Terrasse</span></div></td>
+          </tr>
+          <tr class="hover:bg-gray-50">
+            <td class="px-5 py-3 font-medium text-gray-900">Tonic Fever Tree</td>
+            <td class="px-4 py-3 text-right font-semibold">4 <span class="text-gray-400 font-normal">carton</span></td>
+            <td class="px-4 py-3"><span class="inline-flex px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700">Rossi</span></td>
+            <td class="px-4 py-3"><div class="flex flex-wrap gap-1"><span class="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">Malman</span><span class="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">Itaca</span></div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- ÉCRAN 5 : CATALOGUE -->
+<!-- ============================================================ -->
+<div id="screen-catalog" class="screen">
+  <header class="bg-white shadow-sm border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <span class="text-xl font-bold text-gray-900">Centralisation Commandes</span>
+        <span class="text-gray-300">|</span>
+        <div class="flex items-center gap-2">
+          <div class="w-3 h-3 rounded-full" style="background:#F59E0B"></div>
+          <span class="font-medium text-gray-700">La Terrasse</span>
+        </div>
+      </div>
+      <nav class="flex items-center gap-4">
+        <a href="#" onclick="show('dashboard'); return false" class="text-sm font-medium text-gray-600">Mon tableau de bord</a>
+        <a href="#" class="text-sm font-medium text-gray-600">Catalogue</a>
+        <button onclick="show('home')" class="text-sm font-medium text-red-500">Changer</button>
+      </nav>
+    </div>
+  </header>
+
+  <div class="max-w-3xl mx-auto px-4 py-6">
+    <div class="mb-6">
+      <h1 class="text-2xl font-bold text-gray-900">Catalogue produits</h1>
+      <p class="text-gray-500 text-sm mt-1">Produits disponibles par fournisseur</p>
+    </div>
+
+    <!-- Rossi -->
+    <div class="mb-8">
+      <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold mb-4 bg-blue-100 text-blue-800">
+        Rossi — Boissons <span class="text-xs opacity-70">(9 produits)</span>
+      </div>
+      <div class="space-y-4">
+        <div>
+          <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Eaux</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div class="bg-white rounded-lg border border-gray-200 px-4 py-3 flex justify-between"><span class="text-sm font-medium text-gray-800">Perrier 75cl</span><span class="text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded">bouteille</span></div>
+            <div class="bg-white rounded-lg border border-gray-200 px-4 py-3 flex justify-between"><span class="text-sm font-medium text-gray-800">Perrier 33cl</span><span class="text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded">bouteille</span></div>
+            <div class="bg-white rounded-lg border border-gray-200 px-4 py-3 flex justify-between"><span class="text-sm font-medium text-gray-800">Chateldon 75cl</span><span class="text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded">bouteille</span></div>
+            <div class="bg-white rounded-lg border border-gray-200 px-4 py-3 flex justify-between"><span class="text-sm font-medium text-gray-800">Chateldon 33cl</span><span class="text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded">bouteille</span></div>
+            <div class="bg-white rounded-lg border border-gray-200 px-4 py-3 flex justify-between"><span class="text-sm font-medium text-gray-800">San Pellegrino</span><span class="text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded">carton</span></div>
+          </div>
+        </div>
+        <div>
+          <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Sodas</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div class="bg-white rounded-lg border border-gray-200 px-4 py-3 flex justify-between"><span class="text-sm font-medium text-gray-800">Coca-Cola</span><span class="text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded">carton</span></div>
+            <div class="bg-white rounded-lg border border-gray-200 px-4 py-3 flex justify-between"><span class="text-sm font-medium text-gray-800">Coca-Cola Zero</span><span class="text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded">carton</span></div>
+          </div>
+        </div>
+        <div>
+          <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Mixers</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div class="bg-white rounded-lg border border-gray-200 px-4 py-3 flex justify-between"><span class="text-sm font-medium text-gray-800">Tonic Fever Tree</span><span class="text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded">carton</span></div>
+          </div>
+        </div>
+        <div>
+          <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Bières</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div class="bg-white rounded-lg border border-gray-200 px-4 py-3 flex justify-between"><span class="text-sm font-medium text-gray-800">Heineken 33cl</span><span class="text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded">carton</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Prodacteur -->
+    <div class="mb-8">
+      <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold mb-4 bg-green-100 text-green-800">
+        Prodacteur — Café, Sirops, Consommables <span class="text-xs opacity-70">(10 produits)</span>
+      </div>
+      <div class="space-y-4">
+        <div>
+          <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Café</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div class="bg-white rounded-lg border border-gray-200 px-4 py-3 flex justify-between"><span class="text-sm font-medium text-gray-800">Café expresso</span><span class="text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded">kg</span></div>
+          </div>
+        </div>
+        <div>
+          <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Sirops Maison Meneaux</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div class="bg-white rounded-lg border border-gray-200 px-4 py-3 flex justify-between"><span class="text-sm font-medium text-gray-800">Sirop Menthe</span><span class="text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded">bouteille</span></div>
+            <div class="bg-white rounded-lg border border-gray-200 px-4 py-3 flex justify-between"><span class="text-sm font-medium text-gray-800">Sirop Fraise</span><span class="text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded">bouteille</span></div>
+            <div class="bg-white rounded-lg border border-gray-200 px-4 py-3 flex justify-between"><span class="text-sm font-medium text-gray-800">Sirop Citron</span><span class="text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded">bouteille</span></div>
+            <div class="bg-white rounded-lg border border-gray-200 px-4 py-3 flex justify-between"><span class="text-sm font-medium text-gray-800">Sirop Caramel</span><span class="text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded">bouteille</span></div>
+          </div>
+        </div>
+        <div>
+          <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Consommables</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div class="bg-white rounded-lg border border-gray-200 px-4 py-3 flex justify-between"><span class="text-sm font-medium text-gray-800">Sucre de canne</span><span class="text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded">kg</span></div>
+            <div class="bg-white rounded-lg border border-gray-200 px-4 py-3 flex justify-between"><span class="text-sm font-medium text-gray-800">Serviettes blanches</span><span class="text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded">paquet</span></div>
+            <div class="bg-white rounded-lg border border-gray-200 px-4 py-3 flex justify-between"><span class="text-sm font-medium text-gray-800">Serviettes cocktail</span><span class="text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded">paquet</span></div>
+          </div>
+        </div>
+        <div>
+          <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Produits frais</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div class="bg-white rounded-lg border border-gray-200 px-4 py-3 flex justify-between"><span class="text-sm font-medium text-gray-800">Lait entier</span><span class="text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded">litre</span></div>
+            <div class="bg-white rounded-lg border border-gray-200 px-4 py-3 flex justify-between"><span class="text-sm font-medium text-gray-800">Crème fraîche</span><span class="text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded">litre</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Info calendrier -->
+    <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-800">
+      <strong>Calendrier des commandes :</strong>
+      <ul class="mt-2 space-y-1 text-amber-700">
+        <li>• <strong>Rossi</strong> — commande envoyée le vendredi avant 12h</li>
+        <li>• <strong>Prodacteur</strong> — commande envoyée le mercredi avant 12h</li>
+        <li>• Sirops <strong>Maison Meneaux</strong> commandés via Prodacteur</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script>
+function show(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  window.scrollTo(0, 0);
+}
+</script>
+</body>
+</html>
