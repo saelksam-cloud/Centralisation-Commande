@@ -4,17 +4,20 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useUser } from '@/hooks/useUser'
 import { useOrders } from '@/hooks/useOrders'
-import { RESTAURANTS, RestaurantId } from '@/lib/types'
-import { getWeekYear, exportToCSV } from '@/lib/utils'
-import StatusBadge from '@/components/StatusBadge'
+import { SUPPLIERS, RESTAURANTS, RestaurantId, SupplierId } from '@/lib/types'
+import { getWeekYear, getWeekLabel, generateWhatsAppMessage, openWhatsApp, copyToClipboard, exportToCSV, getSendDateLabel, getDeliveryDateById as getDeliveryDate, formatDate } from '@/lib/utils'
+
+const SUPPLIER_IDS = Object.keys(SUPPLIERS) as SupplierId[]
+const RESTAURANT_IDS = Object.keys(RESTAURANTS) as RestaurantId[]
 
 export default function ManagerPage() {
   const { user, loaded: userLoaded } = useUser()
-  const { orders, loaded: ordersLoaded, markAsSent, getCurrentWeekOrders } = useOrders()
+  const { orders, loaded: ordersLoaded, setSupplierStatus, getCurrentWeekOrders } = useOrders()
   const router = useRouter()
 
-  const [filterSupplier, setFilterSupplier] = useState<'all' | 'rossi' | 'prodacteur'>('all')
-  const [selectedWeek, setSelectedWeek] = useState(getWeekYear())
+  const [activeSupplier, setActiveSupplier] = useState<SupplierId>('rossi')
+  const [weekYear] = useState(getWeekYear())
+  const [copiedSupplier, setCopiedSupplier] = useState<SupplierId | null>(null)
 
   useEffect(() => {
     if (userLoaded && user !== 'manager') router.push('/')
@@ -22,200 +25,193 @@ export default function ManagerPage() {
 
   if (!userLoaded || !ordersLoaded || user !== 'manager') return null
 
-  const weekOrders = getCurrentWeekOrders(selectedWeek)
-  const restaurantIds = Object.keys(RESTAURANTS) as RestaurantId[]
+  const weekOrders = getCurrentWeekOrders(weekYear)
 
-  // Consolidated totals
-  const allItems = weekOrders.flatMap(o => o.items.map(i => ({ ...i, restaurantId: o.restaurantId })))
-  const filteredItems = allItems.filter(i => filterSupplier === 'all' || i.supplier === filterSupplier)
-
-  // Group by product name for totals
-  const totals: Record<string, { quantity: number; unit: string; supplier: string; restaurants: string[] }> = {}
-  filteredItems.forEach(item => {
-    const key = `${item.productName}__${item.unit}`
-    if (!totals[key]) {
-      totals[key] = { quantity: 0, unit: item.unit, supplier: item.supplier, restaurants: [] }
-    }
-    totals[key].quantity += item.quantity
-    const rName = RESTAURANTS[item.restaurantId].name
-    if (!totals[key].restaurants.includes(rName)) totals[key].restaurants.push(rName)
-  })
-
-  const handleExport = (supplier: 'rossi' | 'prodacteur') => {
-    const rows = weekOrders.flatMap(o =>
-      o.items
-        .filter(i => i.supplier === supplier)
-        .map(i => ({
-          Restaurant: RESTAURANTS[o.restaurantId].name,
-          Produit: i.productName,
-          Quantite: i.quantity,
-          Unite: i.unit,
-          Categorie: i.category,
-          Notes: i.notes || '',
-          Statut: o.status,
-        }))
-    )
-    exportToCSV(rows, `commande-${supplier}-${selectedWeek}.csv`)
+  const handleCopy = async (sid: SupplierId) => {
+    const msg = generateWhatsAppMessage(sid, weekOrders, weekYear)
+    await copyToClipboard(msg)
+    setCopiedSupplier(sid)
+    setTimeout(() => setCopiedSupplier(null), 2000)
   }
 
-  // Available weeks (current + last 4)
-  const availableWeeks = Array.from(new Set(orders.map(o => o.weekYear))).sort().reverse()
-  if (!availableWeeks.includes(selectedWeek)) availableWeeks.unshift(selectedWeek)
+  const handleExport = (sid: SupplierId) => {
+    const rows = weekOrders.flatMap(o =>
+      o.items.filter(i => i.supplierId === sid).map(i => ({
+        Restaurant: RESTAURANTS[o.restaurantId].name,
+        Produit: i.productName,
+        Quantite: i.quantity,
+        Unite: i.unit,
+        Categorie: i.category,
+        Notes: i.notes || '',
+        Statut: o.statusBySupplier?.[sid] || 'draft',
+      }))
+    )
+    exportToCSV(rows, `commande-${sid}-${weekYear}.csv`)
+  }
+
+  const getItemCount = (sid: SupplierId) =>
+    weekOrders.flatMap(o => o.items.filter(i => i.supplierId === sid)).length
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Vue FNB Manager</h1>
-          <p className="text-gray-500 text-sm mt-1">Commandes consolidées de tous les restaurants</p>
-        </div>
-        <div className="flex gap-2">
-          <button onClick={() => handleExport('rossi')}
-            className="px-3 py-2 bg-blue-50 text-blue-700 border border-blue-200 rounded-lg text-sm font-medium hover:bg-blue-100">
-            Export Rossi
-          </button>
-          <button onClick={() => handleExport('prodacteur')}
-            className="px-3 py-2 bg-green-50 text-green-700 border border-green-200 rounded-lg text-sm font-medium hover:bg-green-100">
-            Export Prodacteur
-          </button>
-        </div>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">Vue FNB Manager</h1>
+        <p className="text-gray-500 text-sm mt-1">Semaine du {getWeekLabel(weekYear)} — toutes les commandes centralisées</p>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-wrap gap-3 mb-6">
-        <select
-          value={selectedWeek}
-          onChange={e => setSelectedWeek(e.target.value)}
-          className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white"
-        >
-          {availableWeeks.map(w => <option key={w} value={w}>{w}</option>)}
-        </select>
-        <div className="flex gap-2">
-          {(['all', 'rossi', 'prodacteur'] as const).map(s => (
-            <button key={s} onClick={() => setFilterSupplier(s)}
-              className={`px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${filterSupplier === s ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}>
-              {s === 'all' ? 'Tous fournisseurs' : s === 'rossi' ? 'Rossi' : 'Prodacteur'}
+      {/* Supplier tabs */}
+      <div className="flex gap-2 flex-wrap mb-6">
+        {SUPPLIER_IDS.map(sid => {
+          const s = SUPPLIERS[sid]
+          const count = getItemCount(sid)
+          const isActive = activeSupplier === sid
+          return (
+            <button key={sid} onClick={() => setActiveSupplier(sid)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${isActive ? 'text-white' : 'bg-white border border-gray-200 text-gray-600'}`}
+              style={isActive ? { backgroundColor: s.color } : {}}>
+              {s.name}
+              {count > 0 && <span className={`text-xs px-1.5 py-0.5 rounded-full ${isActive ? 'bg-white/30' : 'bg-gray-100'}`} style={isActive ? { color: s.color } : {}}>{count}</span>}
             </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Status per restaurant */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-        {restaurantIds.map(rId => {
-          const rOrder = weekOrders.find(o => o.restaurantId === rId)
-          const r = RESTAURANTS[rId]
-          return (
-            <div key={rId} className="bg-white rounded-xl border border-gray-200 p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: r.color }} />
-                <span className="font-medium text-sm text-gray-800">{r.name}</span>
-              </div>
-              {rOrder ? (
-                <>
-                  <StatusBadge status={rOrder.status} />
-                  <div className="text-xs text-gray-500 mt-2">{rOrder.items.length} article{rOrder.items.length !== 1 ? 's' : ''}</div>
-                  {rOrder.status !== 'sent' && (
-                    <button onClick={() => markAsSent(rOrder.id)}
-                      className="mt-2 text-xs px-2 py-1 bg-green-50 text-green-700 rounded-md hover:bg-green-100 w-full">
-                      Marquer envoyée
-                    </button>
-                  )}
-                </>
-              ) : (
-                <span className="text-xs text-gray-400">Pas de commande</span>
-              )}
-            </div>
           )
         })}
       </div>
 
-      {/* Consolidated totals */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden mb-6">
-        <div className="px-5 py-4 border-b border-gray-100">
-          <h2 className="font-semibold text-gray-900">Totaux consolidés</h2>
-          <p className="text-xs text-gray-500 mt-0.5">Quantités totales à commander par produit</p>
-        </div>
-        {Object.keys(totals).length === 0 ? (
-          <div className="py-12 text-center text-gray-400 text-sm">Aucune commande pour cette semaine</div>
-        ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="text-left px-5 py-3 font-medium text-gray-600 text-xs uppercase tracking-wider">Produit</th>
-                <th className="text-right px-4 py-3 font-medium text-gray-600 text-xs uppercase tracking-wider">Quantité totale</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600 text-xs uppercase tracking-wider">Fournisseur</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600 text-xs uppercase tracking-wider hidden sm:table-cell">Restaurants</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {Object.entries(totals)
-                .sort((a, b) => a[1].supplier.localeCompare(b[1].supplier) || a[0].localeCompare(b[0]))
-                .map(([key, total]) => {
-                  const productName = key.split('__')[0]
-                  return (
-                    <tr key={key} className="hover:bg-gray-50">
-                      <td className="px-5 py-3 font-medium text-gray-900">{productName}</td>
-                      <td className="px-4 py-3 text-right font-semibold">
-                        {total.quantity} <span className="text-gray-400 font-normal">{total.unit}</span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${total.supplier === 'rossi' ? 'bg-blue-50 text-blue-700' : 'bg-green-50 text-green-700'}`}>
-                          {total.supplier === 'rossi' ? 'Rossi' : 'Prodacteur'}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 hidden sm:table-cell">
-                        <div className="flex flex-wrap gap-1">
-                          {total.restaurants.map(r => (
-                            <span key={r} className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">{r}</span>
-                          ))}
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })}
-            </tbody>
-          </table>
-        )}
-      </div>
+      {/* Active supplier panel */}
+      {(() => {
+        const supplier = SUPPLIERS[activeSupplier]
+        const deliveryDate = getDeliveryDate(activeSupplier)
+        const allItems = weekOrders.flatMap(o => o.items.filter(i => i.supplierId === activeSupplier))
 
-      {/* Detail per restaurant */}
-      <div className="space-y-4">
-        <h2 className="font-semibold text-gray-900">Détail par restaurant</h2>
-        {weekOrders.length === 0 && (
-          <p className="text-gray-400 text-sm">Aucune commande cette semaine</p>
-        )}
-        {weekOrders.map(order => {
-          const r = RESTAURANTS[order.restaurantId]
-          const orderItems = order.items.filter(i => filterSupplier === 'all' || i.supplier === filterSupplier)
-          if (orderItems.length === 0) return null
-          return (
-            <div key={order.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-              <div className="px-5 py-3 flex items-center justify-between border-b border-gray-100" style={{ borderLeftColor: r.color, borderLeftWidth: 4 }}>
-                <div className="flex items-center gap-3">
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: r.color }} />
-                  <span className="font-medium text-gray-900">{r.name}</span>
-                  <StatusBadge status={order.status} />
-                </div>
-                <span className="text-xs text-gray-400">{orderItems.length} article{orderItems.length !== 1 ? 's' : ''}</span>
+        return (
+          <div>
+            {/* Info envoi */}
+            <div className="rounded-xl p-4 text-white mb-4 flex flex-wrap items-center justify-between gap-3" style={{ backgroundColor: supplier.color }}>
+              <div>
+                <div className="font-semibold">{supplier.name} — {supplier.description}</div>
+                <div className="text-sm opacity-80 mt-1">📅 Envoi : {getSendDateLabel(activeSupplier)}</div>
+                <div className="text-sm opacity-75">📦 Livraison : {formatDate(deliveryDate)}</div>
               </div>
-              <div className="divide-y divide-gray-50">
-                {orderItems.map(item => (
-                  <div key={item.id} className="px-5 py-2.5 flex items-center justify-between">
-                    <span className="text-sm text-gray-800">{item.productName}</span>
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm font-medium">{item.quantity} {item.unit}</span>
-                      <span className={`text-xs px-1.5 py-0.5 rounded ${item.supplier === 'rossi' ? 'bg-blue-50 text-blue-600' : 'bg-green-50 text-green-600'}`}>
-                        {item.supplier === 'rossi' ? 'Rossi' : 'Prodacteur'}
-                      </span>
+              <div className="flex flex-wrap gap-2">
+                <button onClick={() => handleCopy(activeSupplier)}
+                  className="px-3 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-medium">
+                  {copiedSupplier === activeSupplier ? '✅ Copié' : '📋 Copier message'}
+                </button>
+                <button onClick={() => openWhatsApp(activeSupplier, generateWhatsAppMessage(activeSupplier, weekOrders, weekYear))}
+                  className="px-3 py-2 rounded-lg text-sm font-medium text-white" style={{ backgroundColor: '#25D366' }}>
+                  📱 WhatsApp
+                </button>
+                <button onClick={() => handleExport(activeSupplier)}
+                  className="px-3 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-medium">
+                  ⬇️ Export CSV
+                </button>
+              </div>
+            </div>
+
+            {/* Status per restaurant */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+              {RESTAURANT_IDS.filter(rId => supplier.restaurants.includes(rId)).map(rId => {
+                const r = RESTAURANTS[rId]
+                const rOrder = weekOrders.find(o => o.restaurantId === rId)
+                const status = rOrder?.statusBySupplier?.[activeSupplier] || 'draft'
+                const count = rOrder?.items.filter(i => i.supplierId === activeSupplier).length || 0
+                const statusConfig = {
+                  draft: { label: 'Brouillon', cls: 'bg-gray-100 text-gray-600' },
+                  validated: { label: 'Validée', cls: 'bg-blue-100 text-blue-700' },
+                  sent: { label: 'Envoyée', cls: 'bg-green-100 text-green-700' },
+                }
+                return (
+                  <div key={rId} className="bg-white rounded-xl border border-gray-200 p-3">
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: r.color }} />
+                      <span className="font-medium text-sm">{r.name}</span>
                     </div>
+                    <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${statusConfig[status].cls}`}>{statusConfig[status].label}</span>
+                    <div className="text-xs text-gray-400 mt-1.5">{count} article{count !== 1 ? 's' : ''}</div>
+                    {status !== 'sent' && rOrder && (
+                      <button onClick={() => setSupplierStatus(rId, activeSupplier)}
+                        className="mt-2 w-full text-xs py-1 bg-green-50 text-green-700 rounded-md hover:bg-green-100">
+                        ✓ Marquer envoyée
+                      </button>
+                    )}
                   </div>
-                ))}
-              </div>
+                )
+              })}
             </div>
-          )
-        })}
-      </div>
+
+            {/* Consolidated table */}
+            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden mb-4">
+              <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
+                <h2 className="font-semibold text-gray-900">Totaux consolidés</h2>
+                <span className="text-xs text-gray-400">{allItems.length} article{allItems.length !== 1 ? 's' : ''} au total</span>
+              </div>
+              {allItems.length === 0 ? (
+                <div className="py-10 text-center text-gray-400 text-sm">Aucune commande cette semaine</div>
+              ) : (() => {
+                const totals: Record<string, { qty: number; unit: string; restaurants: string[] }> = {}
+                weekOrders.forEach(o => {
+                  o.items.filter(i => i.supplierId === activeSupplier).forEach(item => {
+                    const key = `${item.productName}__${item.unit}`
+                    if (!totals[key]) totals[key] = { qty: 0, unit: item.unit, restaurants: [] }
+                    totals[key].qty += item.quantity
+                    const rName = RESTAURANTS[o.restaurantId].name
+                    if (!totals[key].restaurants.includes(rName)) totals[key].restaurants.push(rName)
+                  })
+                })
+                return (
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50 text-xs text-gray-500 uppercase tracking-wider">
+                      <tr>
+                        <th className="text-left px-5 py-3">Produit</th>
+                        <th className="text-right px-4 py-3">Qté totale</th>
+                        <th className="text-left px-4 py-3 hidden sm:table-cell">Restaurants</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50">
+                      {Object.entries(totals).map(([key, total]) => (
+                        <tr key={key} className="hover:bg-gray-50">
+                          <td className="px-5 py-2.5 font-medium text-gray-900">{key.split('__')[0]}</td>
+                          <td className="px-4 py-2.5 text-right font-bold">{total.qty} <span className="text-gray-400 font-normal text-xs">{total.unit}</span></td>
+                          <td className="px-4 py-2.5 hidden sm:table-cell">
+                            <div className="flex flex-wrap gap-1">
+                              {total.restaurants.map(r => <span key={r} className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">{r}</span>)}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )
+              })()}
+            </div>
+
+            {/* Detail per restaurant */}
+            <div className="space-y-3">
+              {RESTAURANT_IDS.filter(rId => supplier.restaurants.includes(rId)).map(rId => {
+                const r = RESTAURANTS[rId]
+                const rOrder = weekOrders.find(o => o.restaurantId === rId)
+                const rItems = rOrder?.items.filter(i => i.supplierId === activeSupplier) || []
+                return (
+                  <div key={rId} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                    <div className="px-4 py-3 flex items-center gap-2 border-b border-gray-50" style={{ borderLeftColor: r.color, borderLeftWidth: 4 }}>
+                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: r.color }} />
+                      <span className="font-medium text-sm text-gray-900">{r.name}</span>
+                      <span className="text-xs text-gray-400 ml-auto">{rItems.length} article{rItems.length !== 1 ? 's' : ''}</span>
+                    </div>
+                    {rItems.length === 0 ? (
+                      <div className="px-4 py-3 text-xs text-gray-400 italic">Pas de commande</div>
+                    ) : rItems.map(item => (
+                      <div key={item.id} className="flex items-center justify-between px-4 py-2 border-b border-gray-50 last:border-b-0">
+                        <span className="text-sm text-gray-800">{item.productName}</span>
+                        <span className="text-sm font-medium">{item.quantity} <span className="text-gray-400 font-normal">{item.unit}</span></span>
+                      </div>
+                    ))}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )
+      })()}
     </div>
   )
 }

@@ -1,11 +1,8 @@
 'use client'
-
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useUser } from '@/hooks/useUser'
-import { RESTAURANTS, UserRole } from '@/lib/types'
-
-const MANAGER = { name: 'FNB Manager', color: '#EF4444', description: 'Vue consolidée de tous les restaurants' }
+import { RESTAURANTS, RestaurantId } from '@/lib/types'
 
 export default function HomePage() {
   const { user, loaded, selectUser } = useUser()
@@ -13,71 +10,45 @@ export default function HomePage() {
 
   useEffect(() => {
     if (loaded && user) {
-      if (user === 'manager') {
-        router.push('/manager')
-      } else {
-        router.push('/dashboard')
-      }
+      router.replace('/commandes')
     }
   }, [loaded, user, router])
 
-  const handleSelect = (role: UserRole) => {
+  if (!loaded || user) return null
+
+  const handleSelect = (role: RestaurantId | 'manager') => {
     selectUser(role)
-    if (role === 'manager') {
-      router.push('/manager')
-    } else {
-      router.push('/dashboard')
-    }
+    router.push('/commandes')
   }
 
-  if (!loaded) return null
-
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-      <div className="max-w-2xl w-full">
-        <div className="text-center mb-10">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Centralisation des Commandes
-          </h1>
-          <p className="text-gray-500">
-            Sélectionnez votre restaurant pour accéder à votre espace
-          </p>
-        </div>
+    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        <h1 className="text-2xl font-bold text-gray-900 text-center mb-2">
+          Centralisation Commandes
+        </h1>
+        <p className="text-gray-500 text-center mb-8">Choisissez votre restaurant</p>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {(Object.entries(RESTAURANTS) as [keyof typeof RESTAURANTS, { name: string; color: string }][]).map(([id, info]) => (
+        <div className="grid grid-cols-2 gap-3 mb-3">
+          {(Object.entries(RESTAURANTS) as [RestaurantId, { name: string; color: string }][]).map(([id, r]) => (
             <button
               key={id}
               onClick={() => handleSelect(id)}
-              className="bg-white rounded-xl shadow-sm border-2 p-6 text-left hover:shadow-md transition-all hover:scale-[1.02] active:scale-[0.98]"
-              style={{ borderColor: info.color }}
+              className="rounded-xl p-5 text-white font-semibold text-lg shadow-sm hover:opacity-90 active:scale-95 transition-all"
+              style={{ backgroundColor: r.color }}
             >
-              <div
-                className="w-10 h-10 rounded-full mb-4 flex items-center justify-center text-white font-bold text-lg"
-                style={{ backgroundColor: info.color }}
-              >
-                {info.name[0]}
-              </div>
-              <h2 className="text-lg font-semibold text-gray-900">{info.name}</h2>
-              <p className="text-sm text-gray-500 mt-1">Accéder à mes commandes</p>
+              {r.name}
             </button>
           ))}
-
-          <button
-            onClick={() => handleSelect('manager')}
-            className="bg-white rounded-xl shadow-sm border-2 p-6 text-left hover:shadow-md transition-all hover:scale-[1.02] active:scale-[0.98] sm:col-span-2"
-            style={{ borderColor: MANAGER.color }}
-          >
-            <div
-              className="w-10 h-10 rounded-full mb-4 flex items-center justify-center text-white font-bold text-lg"
-              style={{ backgroundColor: MANAGER.color }}
-            >
-              F
-            </div>
-            <h2 className="text-lg font-semibold text-gray-900">{MANAGER.name}</h2>
-            <p className="text-sm text-gray-500 mt-1">{MANAGER.description}</p>
-          </button>
         </div>
+
+        <button
+          onClick={() => handleSelect('manager')}
+          className="w-full rounded-xl p-5 text-white font-semibold text-lg shadow-sm hover:opacity-90 active:scale-95 transition-all"
+          style={{ backgroundColor: '#EF4444' }}
+        >
+          FNB Manager
+        </button>
       </div>
     </div>
   )
