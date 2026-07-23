@@ -1,0 +1,2375 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Planning Chantier</title>
+<style>
+/* ── Tokens ── */
+:root {
+  --bg: #F6F5F2;
+  --surface: #FFFFFF;
+  --surface-2: #F0EFEb;
+  --border: #E2E0DA;
+  --border-strong: #C8C6BF;
+  --text: #1A1A18;
+  --text-2: #6E6C68;
+  --text-3: #9E9C98;
+  --accent: #1C4CE8;
+  --accent-light: #EEF2FD;
+  --accent-hover: #1540CC;
+  --danger: #DC2626;
+  --danger-light: #FEF2F2;
+  --success: #16A34A;
+  --success-light: #F0FDF4;
+  --radius: 10px;
+  --radius-sm: 6px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #111110;
+    --surface: #1C1B19;
+    --surface-2: #252420;
+    --border: #302E2A;
+    --border-strong: #4A4844;
+    --text: #F0EFEB;
+    --text-2: #A8A6A0;
+    --text-3: #6E6C68;
+    --accent: #4D72F0;
+    --accent-light: #1A2240;
+    --accent-hover: #6888F4;
+    --danger: #F87171;
+    --danger-light: #2A1010;
+    --success: #4ADE80;
+    --success-light: #0A2010;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111110;
+  --surface: #1C1B19;
+  --surface-2: #252420;
+  --border: #302E2A;
+  --border-strong: #4A4844;
+  --text: #F0EFEB;
+  --text-2: #A8A6A0;
+  --text-3: #6E6C68;
+  --accent: #4D72F0;
+  --accent-light: #1A2240;
+  --accent-hover: #6888F4;
+  --danger: #F87171;
+  --danger-light: #2A1010;
+  --success: #4ADE80;
+  --success-light: #0A2010;
+}
+:root[data-theme="light"] {
+  --bg: #F6F5F2;
+  --surface: #FFFFFF;
+  --surface-2: #F0EFEB;
+  --border: #E2E0DA;
+  --border-strong: #C8C6BF;
+  --text: #1A1A18;
+  --text-2: #6E6C68;
+  --text-3: #9E9C98;
+  --accent: #1C4CE8;
+  --accent-light: #EEF2FD;
+  --accent-hover: #1540CC;
+  --danger: #DC2626;
+  --danger-light: #FEF2F2;
+  --success: #16A34A;
+  --success-light: #F0FDF4;
+}
+
+/* ── Reset ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 15px; }
+body {
+  font-family: -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+button { cursor: pointer; font: inherit; border: none; background: none; }
+input, select, textarea { font: inherit; }
+a { color: inherit; text-decoration: none; }
+
+/* ── Layout ── */
+#app { display: flex; flex-direction: column; min-height: 100vh; }
+
+/* ── Header ── */
+.header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 100;
+}
+.header-inner {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  height: 52px;
+}
+.logo {
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.logo-icon {
+  width: 26px; height: 26px;
+  background: var(--accent);
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  color: white;
+  font-size: 13px;
+}
+.nav { display: flex; gap: 2px; flex: 1; }
+.nav-btn {
+  padding: 5px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  color: var(--text-2);
+  transition: background 0.12s, color 0.12s;
+}
+.nav-btn:hover { background: var(--surface-2); color: var(--text); }
+.nav-btn.active { background: var(--accent-light); color: var(--accent); font-weight: 600; }
+.header-actions { display: flex; gap: 8px; margin-left: auto; }
+.theme-btn {
+  width: 32px; height: 32px;
+  border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-2);
+  border: 1px solid var(--border);
+  font-size: 14px;
+  transition: border-color 0.12s;
+}
+.theme-btn:hover { border-color: var(--border-strong); color: var(--text); }
+
+/* ── Main ── */
+.main {
+  flex: 1;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 28px 20px;
+  width: 100%;
+}
+
+/* ── Page header ── */
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  gap: 16px;
+}
+.page-title { font-size: 1.25rem; font-weight: 700; letter-spacing: -0.02em; }
+.page-sub { font-size: 0.8125rem; color: var(--text-2); margin-top: 2px; }
+
+/* ── Buttons ── */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: background 0.12s, opacity 0.12s;
+  white-space: nowrap;
+}
+.btn-primary { background: var(--accent); color: white; }
+.btn-primary:hover { background: var(--accent-hover); }
+.btn-secondary {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.btn-secondary:hover { border-color: var(--border-strong); }
+.btn-danger { background: var(--danger-light); color: var(--danger); }
+.btn-danger:hover { opacity: 0.85; }
+.btn-sm { padding: 4px 10px; font-size: 0.8125rem; }
+.btn:disabled { opacity: 0.4; pointer-events: none; }
+
+/* ── Cards ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+}
+.card + .card { margin-top: 12px; }
+
+/* ── Empty state ── */
+.empty {
+  text-align: center;
+  padding: 64px 20px;
+  color: var(--text-2);
+}
+.empty-icon { font-size: 2.5rem; margin-bottom: 12px; }
+.empty h3 { font-size: 1rem; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+.empty p { font-size: 0.875rem; line-height: 1.6; max-width: 340px; margin: 0 auto 20px; }
+
+/* ── Project list ── */
+.project-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  cursor: pointer;
+  transition: border-color 0.12s;
+  display: block;
+  width: 100%;
+  text-align: left;
+  margin-bottom: 10px;
+}
+.project-card:hover { border-color: var(--accent); }
+.project-card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.project-name { font-size: 0.9375rem; font-weight: 600; letter-spacing: -0.01em; }
+.project-date { font-size: 0.8125rem; color: var(--text-3); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.project-address { font-size: 0.8125rem; color: var(--text-2); margin-top: 2px; }
+.project-meta { display: flex; gap: 16px; margin-top: 10px; font-size: 0.8125rem; color: var(--text-3); }
+.project-meta span { display: flex; align-items: center; gap: 4px; }
+
+/* Mini Gantt strip */
+.mini-gantt {
+  height: 4px;
+  background: var(--surface-2);
+  border-radius: 2px;
+  margin-top: 12px;
+  position: relative;
+  overflow: hidden;
+}
+.mini-gantt-bar {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  border-radius: 2px;
+  opacity: 0.7;
+}
+
+/* ── Gantt ── */
+.gantt-wrap { overflow-x: auto; }
+.gantt { position: relative; padding-bottom: 8px; }
+
+/* Day header row */
+.gantt-day-header {
+  display: flex;
+  border-bottom: 2px solid var(--border-strong);
+  margin-bottom: 2px;
+  position: sticky; top: 0; background: var(--surface); z-index: 10;
+}
+.gantt-header-label {
+  width: 200px; flex-shrink: 0;
+  position: sticky; left: 0; z-index: 11;
+  background: var(--surface);
+  box-shadow: 2px 0 6px -2px rgba(0,0,0,0.08);
+}
+.gantt-day-tick {
+  flex-shrink: 0;
+  text-align: center;
+  font-size: 0.6rem;
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+  font-family: ui-monospace, 'SF Mono', monospace;
+  padding: 3px 0 4px;
+  border-right: 1px solid transparent;
+  user-select: none;
+}
+.gantt-day-tick .dow { display: block; font-size: 0.55rem; text-transform: uppercase; letter-spacing: 0.04em; }
+.gantt-day-tick .dom { display: block; font-size: 0.6875rem; font-weight: 600; }
+.gantt-day-tick.sunday { color: var(--text-3); background: #e2e0da; }
+:root[data-theme="dark"] .gantt-day-tick.sunday { background: #252420; }
+@media (prefers-color-scheme: dark) { .gantt-day-tick.sunday { background: #252420; } }
+.gantt-day-tick.month-start { border-left: 2px solid var(--accent); color: var(--accent); }
+.gantt-day-tick.month-start .dom { font-size: 0.75rem; }
+
+/* Rows */
+.gantt-row { display: flex; align-items: stretch; margin-bottom: 3px; }
+.gantt-label {
+  width: 200px; flex-shrink: 0; padding-right: 14px;
+  display: flex; flex-direction: column; justify-content: center;
+  padding-top: 4px; padding-bottom: 4px;
+  position: sticky; left: 0; z-index: 4;
+  background: var(--surface);
+  box-shadow: 2px 0 6px -2px rgba(0,0,0,0.08);
+}
+.gantt-label-name {
+  font-size: 0.8125rem; font-weight: 500; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.gantt-label-sub {
+  font-size: 0.6875rem; color: var(--text-3);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* Track + cells */
+.gantt-track { position: relative; min-height: 44px; flex-shrink: 0; }
+.gantt-day-cell {
+  position: absolute; top: 0; bottom: 0;
+  border-right: 1px solid var(--border);
+}
+.gantt-day-cell.sunday { background: #e2e0da; border-right: 1px solid #ccc; }
+:root[data-theme="dark"] .gantt-day-cell.sunday { background: #252420; border-right: 1px solid #3a3a3a; }
+@media (prefers-color-scheme: dark) { .gantt-day-cell.sunday { background: #252420; border-right: 1px solid #3a3a3a; } }
+.gantt-day-cell.month-start { border-right: 2px solid var(--accent); }
+
+/* Bar */
+.gantt-bar {
+  position: absolute;
+  top: 4px;
+  min-height: 36px; height: auto;
+  border-radius: 5px;
+  display: flex; align-items: center;
+  padding: 5px 6px 5px 8px;
+  font-size: 0.6875rem; font-weight: 600;
+  color: white;
+  white-space: nowrap; overflow: hidden;
+  cursor: grab;
+  transition: filter 0.12s, box-shadow 0.12s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+  user-select: none;
+}
+.gantt-bar:hover { filter: brightness(1.1); box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+.gantt-bar.dragging { cursor: grabbing; opacity: 0.85 !important; box-shadow: 0 4px 16px rgba(0,0,0,0.35); z-index: 20; }
+.gantt-bar-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+.gantt-resize-handle {
+  position: absolute; right: 0; top: 0; bottom: 0; min-height: 100%;
+  width: 8px; cursor: ew-resize;
+  background: rgba(255,255,255,0.25);
+  border-radius: 0 5px 5px 0;
+  flex-shrink: 0;
+}
+.gantt-resize-handle:hover { background: rgba(255,255,255,0.45); }
+#drag-tooltip {
+  position: fixed; z-index: 9999;
+  background: var(--text); color: var(--bg);
+  font-size: 0.75rem; font-weight: 600;
+  padding: 4px 10px; border-radius: 6px;
+  pointer-events: none; display: none;
+  white-space: nowrap; box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+
+/* ── Lot list ── */
+.lot-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.lot-row:last-child { border-bottom: none; }
+.lot-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  margin-top: 6px;
+  flex-shrink: 0;
+}
+.lot-info { flex: 1; min-width: 0; }
+.lot-name { font-size: 0.875rem; font-weight: 500; }
+.lot-desc { font-size: 0.8125rem; color: var(--text-2); margin-top: 1px; }
+.lot-vigilance {
+  font-size: 0.8rem; color: #EF4444; margin-top: 4px;
+  background: #FEF2F2; border-left: 3px solid #EF4444;
+  padding: 4px 8px; border-radius: 0 4px 4px 0;
+  line-height: 1.4;
+}
+/* Red vigilance dot on Gantt bar */
+.gantt-vigilance-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #EF4444; flex-shrink: 0;
+  box-shadow: 0 0 0 2px rgba(239,68,68,0.3);
+  margin-left: 4px; pointer-events: none;
+}
+.lot-sub { font-size: 0.75rem; color: var(--accent); margin-top: 2px; }
+.lot-meta { text-align: right; flex-shrink: 0; }
+.lot-weeks { font-size: 0.875rem; font-weight: 600; font-variant-numeric: tabular-nums; font-family: ui-monospace, 'SF Mono', monospace; }
+.lot-start { font-size: 0.75rem; color: var(--text-3); }
+
+/* ── Tags ── */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  background: var(--surface-2);
+  color: var(--text-2);
+}
+
+/* ── Status badges ── */
+.status-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.12s;
+}
+.status-badge:hover { opacity: 0.8; }
+.status-todo    { background: #F0EFEB; color: #6E6C68; }
+.status-in_progress { background: #EEF2FD; color: #1C4CE8; }
+.status-done    { background: #F0FDF4; color: #16A34A; }
+.status-delayed { background: #FFF7ED; color: #EA580C; }
+
+/* ── Custom sub dropdown ── */
+.sub-picker { position: relative; margin-top: 4px; display: inline-block; max-width: 280px; }
+.sub-picker-btn {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 0.8125rem; font-family: inherit;
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 4px 10px; background: var(--bg); color: var(--text-2);
+  cursor: pointer; width: 100%; text-align: left;
+  transition: border-color 0.12s;
+}
+.sub-picker-btn:hover { border-color: var(--border-strong); }
+.sub-picker-btn.has-value { color: var(--accent); font-weight: 500; border-color: var(--accent-light); }
+.sub-picker-btn::after { content: '▾'; margin-left: auto; font-size: 0.7rem; color: var(--text-3); }
+.sub-picker-list {
+  position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  z-index: 300; overflow-y: auto; max-height: 240px;
+  min-width: 220px;
+}
+.sub-picker-list[hidden] { display: none; }
+.sub-picker-group-label {
+  font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--text-3);
+  padding: 8px 12px 4px;
+}
+.sub-picker-item {
+  padding: 7px 12px; font-size: 0.875rem; cursor: pointer;
+  color: var(--text); transition: background 0.1s;
+  display: block; width: 100%; text-align: left; border: none; background: none; font-family: inherit;
+}
+.sub-picker-item:hover { background: var(--surface-2); }
+.sub-picker-item.selected { color: var(--accent); font-weight: 600; }
+.sub-picker-item.empty { color: var(--text-3); font-style: italic; }
+
+/* ── Progress bar ── */
+.progress-bar-wrap {
+  height: 4px; background: var(--border);
+  border-radius: 2px; overflow: hidden; margin-top: 6px;
+}
+.progress-bar-fill { height: 100%; border-radius: 2px; transition: width 0.3s; }
+
+/* ── Lot edit panel ── */
+.lot-edit-panel {
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  margin-top: 8px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.lot-edit-panel .form-label { font-size: 0.75rem; }
+.lot-edit-panel .form-input { font-size: 0.8125rem; padding: 5px 8px; }
+.progress-input-row { display: flex; align-items: center; gap: 8px; }
+.progress-input-row input[type=range] { flex: 1; accent-color: var(--accent); }
+.progress-input-row span { font-size: 0.8125rem; font-weight: 600; font-variant-numeric: tabular-nums; min-width: 32px; text-align: right; }
+
+/* ── Forms ── */
+.form-grid { display: grid; gap: 12px; }
+.form-grid-2 { grid-template-columns: 1fr 1fr; }
+.form-group { display: flex; flex-direction: column; gap: 5px; }
+.form-label { font-size: 0.8125rem; font-weight: 500; color: var(--text-2); }
+.form-input {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.875rem;
+  transition: border-color 0.12s;
+  outline: none;
+}
+.form-input:focus { border-color: var(--accent); }
+.form-input::placeholder { color: var(--text-3); }
+select.form-input { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236E6C68' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px; }
+textarea.form-input { resize: vertical; min-height: 80px; line-height: 1.5; }
+
+/* ── Subcontractors ── */
+.trade-group { margin-bottom: 20px; }
+.trade-heading {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+.sub-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  gap: 12px;
+}
+.sub-row:last-child { border-bottom: none; }
+.sub-name { font-size: 0.875rem; font-weight: 500; display:flex;align-items:center;gap:7px; }
+.sub-color-dot { width:10px;height:10px;border-radius:50%;flex-shrink:0; }
+.sub-contact { font-size: 0.8125rem; color: var(--text-3); margin-top: 1px; }
+.sub-actions { display: flex; gap: 4px; flex-shrink: 0; }
+
+/* Color swatches */
+.color-swatches { display:flex;flex-wrap:wrap;gap:7px;margin-top:6px; }
+.color-swatch {
+  width:26px;height:26px;border-radius:50%;border:3px solid transparent;
+  cursor:pointer;transition:transform 0.1s,border-color 0.1s;
+  outline:none;padding:0;
+}
+.color-swatch:hover { transform:scale(1.15); }
+.color-swatch.selected { border-color:var(--text);transform:scale(1.1); }
+.btn-ghost {
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 0.8125rem;
+  color: var(--text-2);
+  transition: background 0.1s, color 0.1s;
+}
+.btn-ghost:hover { background: var(--surface-2); color: var(--text); }
+.btn-ghost.danger:hover { background: var(--danger-light); color: var(--danger); }
+
+/* ── Modal ── */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.45);
+  backdrop-filter: blur(2px);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.modal {
+  background: var(--surface);
+  border-radius: 14px;
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 24px;
+}
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+.modal-title { font-size: 1.0625rem; font-weight: 700; letter-spacing: -0.01em; }
+.modal-close {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-2);
+  font-size: 18px;
+  transition: background 0.1s;
+}
+.modal-close:hover { background: var(--surface-2); color: var(--text); }
+.modal-footer {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+/* ── Upload zone ── */
+.upload-zone {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 28px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s;
+}
+.upload-zone:hover, .upload-zone.drag { border-color: var(--accent); background: var(--accent-light); }
+.upload-icon { font-size: 1.75rem; margin-bottom: 8px; }
+.upload-text { font-size: 0.875rem; font-weight: 500; color: var(--text); }
+.upload-hint { font-size: 0.8125rem; color: var(--text-3); margin-top: 2px; }
+
+/* ── Steps ── */
+.steps { display: flex; gap: 0; margin-bottom: 20px; }
+.step {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8125rem;
+  color: var(--text-3);
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--border);
+  transition: color 0.15s, border-color 0.15s;
+}
+.step.active { color: var(--accent); border-color: var(--accent); font-weight: 600; }
+.step.done { color: var(--success); border-color: var(--success); }
+.step-num {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.step.active .step-num { background: var(--accent); color: white; }
+.step.done .step-num { background: var(--success); color: white; }
+
+/* ── Alert ── */
+.alert {
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  margin-bottom: 12px;
+}
+.alert-error { background: var(--danger-light); color: var(--danger); }
+.alert-success { background: var(--success-light); color: var(--success); }
+.alert-info { background: var(--accent-light); color: var(--accent); }
+
+/* ── Spinner ── */
+.spinner {
+  width: 28px; height: 28px;
+  border: 2.5px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  margin: 0 auto;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.generating {
+  text-align: center;
+  padding: 40px 20px;
+}
+.generating p { font-size: 0.875rem; color: var(--text-2); margin-top: 14px; }
+.generating small { font-size: 0.8125rem; color: var(--text-3); display: block; margin-top: 4px; }
+
+/* ── Section separator ── */
+.section-title {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--text-2);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* ── Settings ── */
+.settings-section { margin-bottom: 28px; }
+.settings-label { font-size: 0.875rem; font-weight: 600; margin-bottom: 4px; }
+.settings-hint { font-size: 0.8125rem; color: var(--text-2); margin-bottom: 10px; }
+.api-key-row { display: flex; gap: 8px; }
+
+/* ── Back button ── */
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8125rem;
+  color: var(--text-2);
+  padding: 4px 0;
+  margin-bottom: 16px;
+  transition: color 0.1s;
+}
+.back-btn:hover { color: var(--text); }
+
+/* ── Responsive ── */
+@media (max-width: 600px) {
+  .form-grid-2 { grid-template-columns: 1fr; }
+  .gantt-label { width: 130px; }
+  .main { padding: 20px 14px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="drag-tooltip"></div>
+
+<script>
+// ── Status config ──
+const STATUS_CONFIG = {
+  todo:        { label: 'À faire',   dot: '○', cls: 'status-todo' },
+  in_progress: { label: 'En cours',  dot: '◑', cls: 'status-in_progress' },
+  done:        { label: 'Validé',    dot: '●', cls: 'status-done' },
+  delayed:     { label: 'Retardé',   dot: '▲', cls: 'status-delayed' },
+};
+const STATUS_COLORS_GANTT = {
+  todo:        null,   // use trade color (muted)
+  in_progress: null,   // use trade color (full)
+  done:        '#16A34A',
+  delayed:     '#EA580C',
+};
+
+// ── Constants ──
+const TRADE_LABELS = {
+  gros_oeuvre: 'Gros Œuvre', charpente: 'Charpente', couverture: 'Couverture',
+  facade: 'Façade', isolation: 'Isolation', electricite: 'Électricité',
+  plomberie: 'Plomberie', chauffage: 'Chauffage / CVC',
+  menuiserie_ext: 'Menuiserie Ext.', menuiserie_int: 'Menuiserie Int.',
+  platrerie: 'Plâtrerie / Cloisons', carrelage: 'Carrelage / Revêtements',
+  peinture: 'Peinture / Finitions', espaces_verts: 'Espaces Verts',
+  vrd: 'VRD / Terrassement', autre: 'Autre'
+};
+const TRADE_COLORS = {
+  gros_oeuvre: '#2563EB', charpente: '#B45309', couverture: '#475569',
+  facade: '#7C3AED', isolation: '#059669', electricite: '#F59E0B',
+  plomberie: '#0EA5E9', chauffage: '#EF4444', menuiserie_ext: '#8B5CF6',
+  menuiserie_int: '#EC4899', platrerie: '#64748B', carrelage: '#D97706',
+  peinture: '#DB2777', espaces_verts: '#22C55E', vrd: '#92400E', autre: '#6B7280'
+};
+const TRADE_KEYS = Object.keys(TRADE_LABELS);
+
+// ── State ──
+let state = {
+  view: 'projects',           // 'projects' | 'project-detail' | 'subcontractors' | 'settings'
+  selectedProjectId: null,
+  projects: [],
+  subcontractors: [],
+  apiKey: '',
+  modal: null,                // null | 'new-project' | 'new-sub' | 'edit-sub'
+  modalData: {},
+  modalStep: 'info',          // 'info' | 'devis' | 'generating' | 'result'
+  modalError: null,
+  editingSubId: null,
+  expandedLotId: null,        // lot currently showing edit panel
+};
+
+// ── Storage ──
+function loadState() {
+  try {
+    state.projects = JSON.parse(localStorage.getItem('pc_projects') || '[]');
+    state.subcontractors = JSON.parse(localStorage.getItem('pc_subs') || '[]');
+    state.apiKey = localStorage.getItem('pc_apikey') || '';
+  } catch(e) {}
+}
+function saveProjects() { localStorage.setItem('pc_projects', JSON.stringify(state.projects)); }
+function saveSubs() { localStorage.setItem('pc_subs', JSON.stringify(state.subcontractors)); }
+function saveApiKey(k) { state.apiKey = k; localStorage.setItem('pc_apikey', k); }
+
+// ── Helpers ──
+function uid() { return crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2); }
+
+function addWeeks(dateStr, weeks) {
+  const d = new Date(dateStr);
+  d.setDate(d.getDate() + weeks * 7);
+  return d;
+}
+
+function fmtDate(dateStr, opts = {day:'numeric', month:'short', year:'numeric'}) {
+  return new Date(dateStr).toLocaleDateString('fr-FR', opts);
+}
+
+function fmtMonth(dateStr) {
+  return new Date(dateStr).toLocaleDateString('fr-FR', {month:'short', year:'2-digit'});
+}
+
+function getMonthMarkers(startDate, totalWeeks) {
+  const markers = [];
+  const start = new Date(startDate);
+  let lastMonth = -1;
+  for (let w = 0; w <= totalWeeks; w++) {
+    const d = new Date(start);
+    d.setDate(d.getDate() + w * 7);
+    if (d.getMonth() !== lastMonth) {
+      markers.push({ label: fmtMonth(d.toISOString()), week: w });
+      lastMonth = d.getMonth();
+    }
+  }
+  return markers;
+}
+
+function escHtml(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Abbreviate lot name + subcontractor for Gantt bar display
+function abbreviateLot(name) {
+  const FILLERS = /\b(de|du|des|le|la|les|un|une|au|aux|en|par|sur|pour|avec|dans|l'|d')\b/gi;
+  const ABBREVS = [
+    [/préparation/gi, 'Prép'], [/preparation/gi, 'Prép'],
+    [/protection/gi, 'Protect'], [/installation/gi, 'Install'],
+    [/électrique/gi, 'Élec'], [/electrique/gi, 'Élec'],
+    [/plomberie/gi, 'Plomb'], [/menuiserie/gi, 'Menu'],
+    [/isolation/gi, 'Iso'], [/chantier/gi, 'Chant'],
+    [/extérieure?s?/gi, 'Ext'], [/intérieure?s?/gi, 'Int'],
+    [/revêtement/gi, 'Revêt'], [/carrelage/gi, 'Carrel'],
+    [/peinture/gi, 'Peinture'], [/chauffage/gi, 'Chauff'],
+    [/charpente/gi, 'Charp'], [/couverture/gi, 'Couv'],
+    [/terrassement/gi, 'Terras'], [/façade/gi, 'Façade'],
+  ];
+  let s = name;
+  ABBREVS.forEach(([re, rep]) => { s = s.replace(re, rep); });
+  // Replace "et" with "+" (whole word)
+  s = s.replace(/\bet\b/gi, '+');
+  // Remove filler articles
+  s = s.replace(FILLERS, ' ').replace(/\s{2,}/g, ' ').trim();
+  return s;
+}
+
+function abbreviateSub(name) {
+  // "Moderne Isolation" → "MODERNEISO"  |  "Thibault Gayot" → "T.GAYOT"
+  const words = name.trim().split(/\s+/);
+  if (words.length === 1) return words[0].toUpperCase().slice(0, 10);
+  // First word initial + rest uppercased (no spaces), max 12 chars
+  const result = (words[0][0].toUpperCase() + '.' + words.slice(1).join('').toUpperCase()).slice(0, 12);
+  return result;
+}
+
+// ── Render ──
+function render() {
+  const app = document.getElementById('app');
+  app.innerHTML = renderApp();
+  attachEvents();
+}
+
+function renderApp() {
+  return `
+    ${renderHeader()}
+    <main class="main">
+      ${renderView()}
+    </main>
+    ${state.modal ? renderModal() : ''}
+  `;
+}
+
+function renderHeader() {
+  const views = [
+    { id: 'projects', label: 'Chantiers' },
+    { id: 'subcontractors', label: 'Sous-traitants' },
+    { id: 'settings', label: 'Paramètres' },
+  ];
+  return `
+    <header class="header">
+      <div class="header-inner">
+        <div class="logo">
+          <div class="logo-icon">🏗</div>
+          Planning Chantier
+        </div>
+        <nav class="nav">
+          ${views.map(v => `
+            <button class="nav-btn ${state.view === v.id || (state.view === 'project-detail' && v.id === 'projects') ? 'active' : ''}"
+              data-nav="${v.id}">${v.label}</button>
+          `).join('')}
+        </nav>
+        <div class="header-actions">
+          <button class="theme-btn" id="theme-toggle" title="Changer le thème">◐</button>
+        </div>
+      </div>
+    </header>
+  `;
+}
+
+function renderView() {
+  switch(state.view) {
+    case 'projects': return renderProjectList();
+    case 'project-detail': return renderProjectDetail();
+    case 'subcontractors': return renderSubcontractors();
+    case 'settings': return renderSettings();
+    default: return '';
+  }
+}
+
+// ── Projects list ──
+function renderProjectList() {
+  const projects = state.projects;
+  return `
+    <div class="page-header">
+      <div>
+        <div class="page-title">Chantiers</div>
+        <div class="page-sub">${projects.length} projet${projects.length !== 1 ? 's' : ''}</div>
+      </div>
+      <button class="btn btn-primary" id="btn-new-project">+ Nouveau chantier</button>
+    </div>
+    ${projects.length === 0
+      ? `<div class="empty">
+          <div class="empty-icon">🏗️</div>
+          <h3>Aucun chantier</h3>
+          <p>Créez votre premier chantier. Uploadez un devis et Claude génèrera le planning automatiquement.</p>
+          <button class="btn btn-primary" id="btn-new-project-2">Créer un chantier</button>
+        </div>`
+      : projects.map(p => renderProjectCard(p)).join('')
+    }
+  `;
+}
+
+function renderProjectCard(p) {
+  const totalWeeks = p.lots && p.lots.length > 0
+    ? Math.max(...p.lots.map(l => Math.ceil(((l.startDay ?? l.startWeek*7) + (l.durationDays ?? l.durationWeeks*7)) / 7)))
+    : 0;
+  const miniGantt = p.lots && p.lots.length > 0 && totalWeeks > 0
+    ? `<div class="mini-gantt">${p.lots.slice(0,12).map(lot => `
+        <div class="mini-gantt-bar" style="left:${(lot.startWeek/totalWeeks)*100}%;width:${(lot.durationWeeks/totalWeeks)*100}%;background:${TRADE_COLORS[lot.category] || '#6B7280'}"></div>
+      `).join('')}</div>`
+    : '';
+  return `
+    <button class="project-card" data-project-id="${escHtml(p.id)}">
+      <div class="project-card-header">
+        <div>
+          <div class="project-name">${escHtml(p.name)}</div>
+          ${p.address ? `<div class="project-address">${escHtml(p.address)}</div>` : ''}
+        </div>
+        <div class="project-date">${fmtDate(p.startDate, {month:'short', year:'numeric'})}</div>
+      </div>
+      <div class="project-meta">
+        <span>📋 ${p.lots ? p.lots.length : 0} lots</span>
+        ${totalWeeks > 0 ? `<span>⏱ ~${totalWeeks} semaines</span>` : ''}
+        ${p.devisFileName ? `<span>📄 ${escHtml(p.devisFileName)}</span>` : ''}
+      </div>
+      ${miniGantt}
+    </button>
+  `;
+}
+
+// ── Project detail ──
+function renderProjectDetail() {
+  const project = state.projects.find(p => p.id === state.selectedProjectId);
+  if (!project) return `<div class="empty"><p>Projet introuvable.</p></div>`;
+
+  const lots = project.lots || [];
+  const totalWeeks = lots.length > 0 ? Math.max(...lots.map(l => {
+    const sd = l.startDay ?? l.startWeek * 7;
+    const dd = l.durationDays ?? l.durationWeeks * 7;
+    return Math.ceil((sd + dd) / 7);
+  })) : 4;
+
+  return `
+    <button class="back-btn" id="btn-back">← Retour aux chantiers</button>
+    <div class="page-header">
+      <div>
+        <div class="page-title">${escHtml(project.name)}</div>
+        ${project.address ? `<div class="page-sub">${escHtml(project.address)}</div>` : ''}
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <div style="font-size:0.8125rem;color:var(--text-2)">Début : ${fmtDate(project.startDate)}</div>
+        ${lots.length > 0 ? (() => {
+          const done = lots.filter(l => l.status === 'done').length;
+          const inProg = lots.filter(l => l.status === 'in_progress').length;
+          const delayed = lots.filter(l => l.status === 'delayed').length;
+          const avgPct = Math.round(lots.reduce((s,l) => s + (l.progress||0), 0) / lots.length);
+          return `<div style="font-size:0.8125rem;color:var(--text-2)">
+            ${done}✓ ${inProg > 0 ? inProg+'◑ ' : ''}${delayed > 0 ? '<span style=color:#EA580C>' + delayed + '▲</span> ' : ''}· ${avgPct}% avancé
+          </div>`;
+        })() : ''}
+        <button class="btn btn-secondary btn-sm" id="btn-export-pdf">⬇ Export PDF</button>
+        <button class="btn btn-danger btn-sm" data-delete-project="${escHtml(project.id)}">Supprimer</button>
+      </div>
+    </div>
+
+    ${lots.length === 0
+      ? `<div class="card"><p style="color:var(--text-2);text-align:center;padding:20px">Aucun lot dans ce planning.</p></div>`
+      : `
+        <div class="card" style="margin-bottom:16px">
+          <div class="section-title">Planning Gantt</div>
+          ${renderGantt(lots, totalWeeks, project.startDate)}
+        </div>
+        <div class="card">
+          <div class="section-title">Détail des lots</div>
+          ${lots.map(lot => renderLotRow(lot, project.startDate, project.id)).join('')}
+        </div>
+      `
+    }
+  `;
+}
+
+function renderGantt(lots, totalWeeks, startDate) {
+  const D = 28; // px per day
+  const totalDays = totalWeeks * 7;
+  const totalPx = totalDays * D;
+  const startD = new Date(startDate);
+
+  // Build day header ticks
+  const DAYS_FR = ['Di','Lu','Ma','Me','Je','Ve','Sa'];
+  const dayTicks = Array.from({length: totalDays}, (_, i) => {
+    const d = new Date(startD);
+    d.setDate(d.getDate() + i);
+    const dow = d.getDay(); // 0=Sun
+    const isSun = dow === 0;
+    const isMonthStart = d.getDate() === 1;
+    const cls = [isSun ? 'sunday' : '', isMonthStart ? 'month-start' : ''].filter(Boolean).join(' ');
+    const label = isSun
+      ? `<span class="dow">${DAYS_FR[dow]}</span>`
+      : `<span class="dow">${DAYS_FR[dow]}</span><span class="dom">${d.getDate()}</span>`;
+    // Show month name on first of month
+    const extra = isMonthStart ? `<span class="dom">${d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'})}</span>` : `<span class="dow">${DAYS_FR[dow]}</span><span class="dom">${d.getDate()}</span>`;
+    return `<div class="gantt-day-tick ${cls}" style="width:${D}px">${isSun ? `<span class="dow">${DAYS_FR[0]}</span>` : (isMonthStart ? `<span class="dom" style="font-size:0.6rem">${d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'})}</span>` : `<span class="dow">${DAYS_FR[dow]}</span><span class="dom">${d.getDate()}</span>`)}</div>`;
+  }).join('');
+
+  // Day cells (shared background — rendered once per row via CSS, not per lot)
+  const dayCellsHtml = Array.from({length: totalDays}, (_, i) => {
+    const d = new Date(startD);
+    d.setDate(d.getDate() + i);
+    const isSun = d.getDay() === 0;
+    const isMonthStart = d.getDate() === 1;
+    const cls = [isSun ? 'sunday' : '', isMonthStart ? 'month-start' : ''].filter(Boolean).join(' ');
+    return `<div class="gantt-day-cell ${cls}" style="left:${i*D}px;width:${D}px"></div>`;
+  }).join('');
+
+  const rows = lots.map(lot => {
+    const sub = state.subcontractors.find(s => s.id === lot.subcontractorId);
+    const tradeColor = sub?.color || TRADE_COLORS[lot.category] || '#6B7280';
+    const status = lot.status || 'todo';
+    const progress = lot.progress ?? 0;
+    const sc = STATUS_CONFIG[status];
+    const barColor = STATUS_COLORS_GANTT[status] || tradeColor;
+    const barOpacity = status === 'todo' ? 0.55 : 1;
+    const startDay = lot.startDay ?? lot.startWeek * 7;
+    // durationDays = working days (Mon-Sat); fallback: weeks × 6 working days/week
+    const durationDays = lot.durationDays ?? (lot.durationWeeks * 6);
+    const barText = sub
+      ? `${abbreviateLot(lot.name)} - ${abbreviateSub(sub.name)}`
+      : abbreviateLot(lot.name);
+    const projId = currentProjectId();
+
+    // Split into contiguous segments (each skips Sundays)
+    const segments = calcSegments(startDate, startDay, durationDays);
+    if (segments.length === 0) return '';
+
+    const barsHtml = segments.map((seg, i) => {
+      const isFirst = i === 0;
+      const isLast = i === segments.length - 1;
+      const leftPx = seg.calStart * D;
+      const widthPx = Math.max(seg.calLen * D - 2, D - 2);
+      const dragAttrs = isFirst
+        ? `data-drag-lot="${escHtml(lot.id)}" data-drag-project="${escHtml(projId)}" data-start-day="${startDay}" data-dur-days="${durationDays}"`
+        : `data-lot-seg="${escHtml(lot.id)}"`;
+      const resizeHandle = isLast
+        ? `<div class="gantt-resize-handle" data-resize-lot="${escHtml(lot.id)}" data-resize-project="${escHtml(projId)}" data-resize-seg-start="${seg.calStart}" data-resize-seg-len="${seg.calLen}"></div>`
+        : '';
+      const vigilanceDot = lot.vigilance
+        ? `<span class="gantt-vigilance-dot" title="${escHtml(lot.vigilance)}" style="pointer-events:none"></span>`
+        : '';
+      const textHtml = isFirst && widthPx > 20
+        ? `<span style="font-size:0.6rem;font-weight:600;color:#fff;white-space:normal;line-height:1.3;word-break:break-word;pointer-events:none;flex:1;text-shadow:0 1px 2px rgba(0,0,0,0.3)">${escHtml(barText)}</span>${vigilanceDot}`
+        : (isFirst && lot.vigilance ? vigilanceDot : '');
+      return `<div class="gantt-bar gantt-bar-seg" ${dragAttrs}
+        data-lot-seg="${escHtml(lot.id)}"
+        data-seg-orig-left="${leftPx}"
+        style="left:${leftPx}px;width:${widthPx}px;background:${barColor};opacity:${barOpacity};display:flex;align-items:center;padding:0 6px;overflow:hidden;cursor:grab">
+        ${textHtml}${resizeHandle}
+      </div>`;
+    }).join('');
+
+    return `
+      <div class="gantt-row">
+        <div class="gantt-label">
+          <div class="gantt-label-name" title="${escHtml(lot.name)}">${escHtml(lot.name)}</div>
+          <div class="gantt-label-sub" style="display:flex;align-items:center;gap:3px">
+            <span style="font-size:0.625rem;color:${barColor}">${sc.dot}</span>
+            <span>${sub ? escHtml(sub.name) : TRADE_LABELS[lot.category] || ''}</span>
+          </div>
+        </div>
+        <div class="gantt-track" style="width:${totalPx}px">
+          ${dayCellsHtml}
+          ${barsHtml}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  return `
+    <div class="gantt-wrap">
+      <div class="gantt" style="min-width:${totalPx + 200 + 20}px">
+        <div class="gantt-day-header" style="min-width:${totalPx + 200}px">
+          <div class="gantt-header-label"></div>
+          ${dayTicks}
+        </div>
+        ${rows}
+      </div>
+    </div>
+  `;
+}
+
+function renderLotRow(lot, startDate, projectId) {
+  const sub = state.subcontractors.find(s => s.id === lot.subcontractorId);
+  const tradeColor = sub?.color || TRADE_COLORS[lot.category] || '#6B7280';
+  const startDateLot = new Date(startDate);
+  startDateLot.setDate(startDateLot.getDate() + (lot.startDay ?? lot.startWeek * 7));
+  const startLabel = startDateLot.toLocaleDateString('fr-FR', {day:'numeric', month:'short'});
+  const status = lot.status || 'todo';
+  const progress = lot.progress ?? 0;
+  const sc = STATUS_CONFIG[status];
+  const isExpanded = state.expandedLotId === lot.id;
+
+  // Subcontractors for this trade category
+  const catSubs = state.subcontractors.filter(s => s.category === lot.category);
+  const allSubs = state.subcontractors;
+
+  const progressColor = status === 'done' ? '#16A34A' : status === 'delayed' ? '#EA580C' : status === 'in_progress' ? '#1C4CE8' : '#9E9C98';
+
+  const subSelectOptions = `
+    <option value="">— Aucun —</option>
+    ${catSubs.length ? `<optgroup label="${TRADE_LABELS[lot.category]}">
+      ${catSubs.map(s => `<option value="${escHtml(s.id)}" ${lot.subcontractorId===s.id?'selected':''}>${escHtml(s.name)}</option>`).join('')}
+    </optgroup>` : ''}
+    ${allSubs.filter(s => s.category !== lot.category).length ? `<optgroup label="Autres corps de métier">
+      ${allSubs.filter(s => s.category !== lot.category).map(s => `<option value="${escHtml(s.id)}" ${lot.subcontractorId===s.id?'selected':''}>${escHtml(s.name)} (${TRADE_LABELS[s.category]})</option>`).join('')}
+    </optgroup>` : ''}
+  `;
+
+  return `
+    <div class="lot-row" style="flex-direction:column;align-items:stretch;padding:10px 0">
+      <div style="display:flex;align-items:flex-start;gap:10px">
+        <div class="lot-dot" style="background:${tradeColor};margin-top:7px"></div>
+        <div class="lot-info" style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span class="lot-name">${escHtml(lot.name)}</span>
+            <button class="status-badge ${sc.cls}" data-cycle-status="${escHtml(lot.id)}" data-project-id="${escHtml(projectId)}" title="Cliquer pour changer le statut">
+              ${sc.dot} ${sc.label}
+            </button>
+          </div>
+          ${lot.description ? `<div class="lot-desc">${escHtml(lot.description)}</div>` : ''}
+          ${lot.vigilance ? `<div class="lot-vigilance">⚠ ${escHtml(lot.vigilance)}</div>` : ''}
+          <div class="sub-picker" data-picker-lot="${escHtml(lot.id)}" data-picker-project="${escHtml(projectId)}">
+            <button type="button" class="sub-picker-btn ${sub ? 'has-value' : ''}" data-picker-toggle>
+              ${sub ? escHtml(sub.name) : '— Choisir un sous-traitant —'}
+            </button>
+            <div class="sub-picker-list" hidden>
+              <button type="button" class="sub-picker-item empty" data-picker-value="">Aucun</button>
+              ${catSubs.length ? `<div class="sub-picker-group-label">${TRADE_LABELS[lot.category]}</div>
+                ${catSubs.map(s => `<button type="button" class="sub-picker-item ${lot.subcontractorId===s.id?'selected':''}" data-picker-value="${escHtml(s.id)}"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${s.color||'#6B7280'};flex-shrink:0;margin-right:5px"></span>${escHtml(s.name)}${s.phone ? ' · <span style=color:var(--text-3)>'+escHtml(s.phone)+'</span>' : ''}</button>`).join('')}` : ''}
+              ${allSubs.filter(s => s.category !== lot.category).length ? `<div class="sub-picker-group-label">Autres</div>
+                ${allSubs.filter(s => s.category !== lot.category).map(s => `<button type="button" class="sub-picker-item ${lot.subcontractorId===s.id?'selected':''}" data-picker-value="${escHtml(s.id)}"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${s.color||'#6B7280'};flex-shrink:0;margin-right:5px"></span>${escHtml(s.name)} <span style="color:var(--text-3);font-size:0.75rem">(${TRADE_LABELS[s.category]})</span></button>`).join('')}` : ''}
+            </div>
+          </div>
+          <div class="progress-bar-wrap">
+            <div class="progress-bar-fill" style="width:${progress}%;background:${progressColor}"></div>
+          </div>
+        </div>
+        <div class="lot-meta" style="flex-shrink:0;text-align:right">
+          <div class="lot-weeks">${progress}%</div>
+          <div class="lot-start">${lot.durationDays ?? lot.durationWeeks*6}j · ${startLabel}</div>
+          <button class="btn-ghost" style="font-size:0.75rem;margin-top:4px" data-expand-lot="${escHtml(lot.id)}">${isExpanded ? '▲ Fermer' : '▼ Modifier'}</button>
+        </div>
+      </div>
+      ${isExpanded ? `
+        <div class="lot-edit-panel">
+          <div class="form-group">
+            <label class="form-label">Statut</label>
+            <select class="form-input" data-lot-field="status" data-lot-id="${escHtml(lot.id)}" data-project-id="${escHtml(projectId)}">
+              ${Object.entries(STATUS_CONFIG).map(([k,v]) => `<option value="${k}" ${status===k?'selected':''}>${v.dot} ${v.label}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Avancement</label>
+            <div class="progress-input-row">
+              <input type="range" min="0" max="100" value="${progress}"
+                data-lot-field="progress" data-lot-id="${escHtml(lot.id)}" data-project-id="${escHtml(projectId)}">
+              <span id="pct-${escHtml(lot.id)}">${progress}%</span>
+            </div>
+          </div>
+          <div class="form-group" style="grid-column:1/-1">
+            <label class="form-label" style="display:flex;align-items:center;gap:6px">
+              <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#EF4444;flex-shrink:0"></span>
+              Point de vigilance
+            </label>
+            <textarea class="form-input" rows="2"
+              placeholder="Ex : Accès difficile côté rue, prévoir protection sol, attendre séchage enduit…"
+              data-lot-field="vigilance" data-lot-id="${escHtml(lot.id)}" data-project-id="${escHtml(projectId)}"
+              style="resize:vertical">${escHtml(lot.vigilance||'')}</textarea>
+          </div>
+        </div>
+      ` : ''}
+    </div>
+  `;
+}
+
+// ── Subcontractors ──
+function renderSubcontractors() {
+  const subs = state.subcontractors;
+  const grouped = {};
+  subs.forEach(s => { (grouped[s.category] = grouped[s.category] || []).push(s); });
+
+  return `
+    <div class="page-header">
+      <div>
+        <div class="page-title">Sous-traitants</div>
+        <div class="page-sub">${subs.length} contact${subs.length !== 1 ? 's' : ''}</div>
+      </div>
+      <button class="btn btn-primary" id="btn-new-sub">+ Ajouter</button>
+    </div>
+    ${subs.length === 0
+      ? `<div class="empty">
+          <div class="empty-icon">👷</div>
+          <h3>Aucun sous-traitant</h3>
+          <p>Ajoutez vos sous-traitants par corps de métier. Ils seront assignés automatiquement lors de la génération du planning.</p>
+          <button class="btn btn-primary" id="btn-new-sub-2">Ajouter un sous-traitant</button>
+        </div>`
+      : `<div class="card">
+          ${TRADE_KEYS.filter(k => grouped[k]).map(k => `
+            <div class="trade-group">
+              <div class="trade-heading">${TRADE_LABELS[k]}</div>
+              ${grouped[k].map(sub => `
+                <div class="sub-row">
+                  <div>
+                    <div class="sub-name">
+                      <span class="sub-color-dot" style="background:${sub.color || TRADE_COLORS[sub.category] || '#6B7280'}"></span>
+                      ${escHtml(sub.name)}
+                    </div>
+                    <div class="sub-contact">${[sub.phone, sub.email].filter(Boolean).map(escHtml).join(' · ') || 'Pas de contact'}</div>
+                  </div>
+                  <div class="sub-actions">
+                    <button class="btn-ghost" data-edit-sub="${escHtml(sub.id)}">Modifier</button>
+                    <button class="btn-ghost danger" data-delete-sub="${escHtml(sub.id)}">Supprimer</button>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          `).join('')}
+        </div>`
+    }
+  `;
+}
+
+// ── Settings ──
+function renderSettings() {
+  const masked = state.apiKey ? state.apiKey.slice(0,10) + '••••••••••' : '';
+  return `
+    <div class="page-header">
+      <div class="page-title">Paramètres</div>
+    </div>
+    <div class="card">
+      <div class="settings-section">
+        <div class="settings-label">Clé API Google Gemini</div>
+        <div class="settings-hint">
+          Gratuite (1 500 requêtes/jour). Obtenez-la sur <strong>aistudio.google.com</strong> → Get API Key → Create API Key.
+        </div>
+        <div class="api-key-row">
+          <input type="password" class="form-input" id="input-apikey"
+            placeholder="sk-ant-api03-..."
+            value="${escHtml(state.apiKey)}"
+            style="flex:1">
+          <button class="btn btn-primary" id="btn-save-apikey">Enregistrer</button>
+        </div>
+        ${state.apiKey ? `<div style="margin-top:8px;font-size:0.8125rem;color:var(--success)">✓ Clé configurée</div>` : ''}
+      </div>
+      <div class="settings-section">
+        <div class="settings-label">Données locales</div>
+        <div class="settings-hint">
+          Toutes vos données sont stockées dans votre navigateur (localStorage). Elles restent sur votre appareil.
+        </div>
+        <button class="btn btn-danger btn-sm" id="btn-clear-data">Effacer toutes les données</button>
+      </div>
+    </div>
+  `;
+}
+
+// ── Modal: New Project ──
+function renderModal() {
+  if (state.modal === 'new-project') return renderNewProjectModal();
+  if (state.modal === 'new-sub' || state.modal === 'edit-sub') return renderSubModal();
+  return '';
+}
+
+function renderNewProjectModal() {
+  const d = state.modalData;
+  const step = state.modalStep;
+
+  const steps = [
+    { id: 'info', label: 'Infos' },
+    { id: 'devis', label: 'Devis' },
+    { id: 'result', label: 'Planning' },
+  ];
+  const stepIdx = steps.findIndex(s => s.id === step);
+
+  const stepsHtml = `
+    <div class="steps">
+      ${steps.map((s, i) => `
+        <div class="step ${i < stepIdx ? 'done' : i === stepIdx ? 'active' : ''}">
+          <div class="step-num">${i < stepIdx ? '✓' : i+1}</div>
+          ${s.label}
+        </div>
+      `).join('')}
+    </div>
+  `;
+
+  let body = '';
+  if (step === 'info') {
+    body = `
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Nom du chantier *</label>
+          <input class="form-input" id="modal-name" placeholder="Maison individuelle — Client Martin" value="${escHtml(d.name||'')}">
+        </div>
+        <div class="form-grid form-grid-2">
+          <div class="form-group">
+            <label class="form-label">Adresse</label>
+            <input class="form-input" id="modal-address" placeholder="12 rue des Fleurs, 75001" value="${escHtml(d.address||'')}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Date de début *</label>
+            <input type="date" class="form-input" id="modal-date" value="${escHtml(d.startDate || new Date().toISOString().split('T')[0])}">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="modal-cancel">Annuler</button>
+        <button class="btn btn-primary" id="btn-step-devis">Suivant →</button>
+      </div>
+    `;
+  } else if (step === 'devis') {
+    const hasSubs = state.subcontractors.length > 0;
+    body = `
+      ${state.modalError ? `<div class="alert alert-error">${escHtml(state.modalError)}</div>` : ''}
+      ${d.devisFileName
+        ? `<div class="alert alert-success">
+            ✓ ${escHtml(d.devisFileName)} — ${(d.devisText||'').length.toLocaleString('fr-FR')} caractères
+            <button id="btn-change-devis" style="margin-left:8px;text-decoration:underline;font-size:0.8125rem">Changer</button>
+           </div>`
+        : `<div class="upload-zone" id="upload-zone">
+            <input type="file" id="file-input" accept=".pdf,.txt" style="display:none">
+            <div class="upload-icon">📄</div>
+            <div class="upload-text">Déposer votre devis ici</div>
+            <div class="upload-hint">PDF ou TXT — ou collez le texte ci-dessous</div>
+          </div>`
+      }
+      <div class="form-group" style="margin-top:12px">
+        <label class="form-label">Ou collez le texte du devis directement</label>
+        <textarea class="form-input" id="modal-devis-text" rows="6"
+          placeholder="Collez ici le contenu de votre devis..."
+          style="min-height:120px">${escHtml(d.devisText||'')}</textarea>
+      </div>
+      ${!hasSubs ? `<div class="alert alert-info" style="margin-top:8px">💡 Ajoutez des sous-traitants dans l'onglet "Sous-traitants" pour qu'ils soient assignés automatiquement.</div>` : ''}
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="btn-back-info">← Retour</button>
+        ${!state.apiKey
+          ? `<div style="font-size:0.8125rem;color:var(--danger);align-self:center">Configurez votre clé Gemini dans Paramètres</div>`
+          : `<button class="btn btn-primary" id="btn-generate" ${!d.devisText && !d.devisFileName ? 'disabled' : ''}>Générer le planning IA</button>`
+        }
+      </div>
+    `;
+  } else if (step === 'generating') {
+    body = `
+      <div class="generating">
+        <div class="spinner"></div>
+        <p>Gemini analyse votre devis et génère le planning...</p>
+        ${state.modalError
+          ? `<small style="color:var(--danger)">${escHtml(state.modalError)}</small>`
+          : `<small>10–30 secondes environ — retry automatique si surchargé</small>`
+        }
+      </div>
+    `;
+  } else if (step === 'result') {
+    const lots = d.generatedLots || [];
+    const total = d.totalWeeks || 0;
+    body = `
+      ${d.summary ? `<div class="alert alert-info">${escHtml(d.summary)}</div>` : ''}
+      ${state.modalError ? `<div class="alert alert-error">${escHtml(state.modalError)}</div>` : ''}
+      <div style="background:var(--surface-2);border-radius:var(--radius-sm);padding:12px;margin-bottom:12px">
+        <div style="font-size:0.8125rem;font-weight:600;color:var(--text-2);margin-bottom:8px">
+          ${lots.length} lots — durée estimée : ${total} semaines
+        </div>
+        <div style="max-height:200px;overflow-y:auto">
+          ${lots.map(lot => `
+            <div style="display:flex;justify-content:space-between;font-size:0.8125rem;padding:3px 0;border-bottom:1px solid var(--border)">
+              <span style="color:var(--text)">${escHtml(lot.name)}</span>
+              <span style="color:var(--text-3);font-variant-numeric:tabular-nums;font-family:ui-monospace,monospace">${lot.durationWeeks}s</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="btn-regen">Régénérer</button>
+        <button class="btn btn-primary" id="btn-save-project">Enregistrer le chantier</button>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="modal-overlay" id="modal-overlay">
+      <div class="modal">
+        <div class="modal-header">
+          <div class="modal-title">Nouveau chantier</div>
+          <button class="modal-close" id="modal-close">×</button>
+        </div>
+        ${stepsHtml}
+        ${body}
+      </div>
+    </div>
+  `;
+}
+
+const SUB_COLORS = [
+  '#EF4444','#F97316','#EAB308','#22C55E','#10B981','#14B8A6',
+  '#3B82F6','#6366F1','#8B5CF6','#EC4899','#F43F5E','#0EA5E9',
+  '#84CC16','#F59E0B','#06B6D4','#A855F7','#64748B','#78716C',
+];
+
+function renderSubModal() {
+  const d = state.modalData;
+  const isEdit = state.modal === 'edit-sub';
+  const selectedColor = d.color || SUB_COLORS[0];
+  const swatches = SUB_COLORS.map(c => `
+    <button type="button" class="color-swatch${c===selectedColor?' selected':''}"
+      data-color="${c}" style="background:${c}"
+      title="${c}"></button>
+  `).join('');
+  return `
+    <div class="modal-overlay" id="modal-overlay">
+      <div class="modal" style="max-width:440px">
+        <div class="modal-header">
+          <div class="modal-title">${isEdit ? 'Modifier le sous-traitant' : 'Ajouter un sous-traitant'}</div>
+          <button class="modal-close" id="modal-close">×</button>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Nom *</label>
+            <input class="form-input" id="sub-name" placeholder="Entreprise Dupont" value="${escHtml(d.name||'')}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Couleur dans le planning</label>
+            <div class="color-swatches" id="sub-color-swatches">${swatches}</div>
+            <input type="hidden" id="sub-color" value="${escHtml(selectedColor)}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Corps de métier *</label>
+            <select class="form-input" id="sub-category">
+              ${TRADE_KEYS.map(k => `<option value="${k}" ${(d.category||'gros_oeuvre')===k?'selected':''}>${TRADE_LABELS[k]}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-grid form-grid-2">
+            <div class="form-group">
+              <label class="form-label">Téléphone</label>
+              <input class="form-input" id="sub-phone" placeholder="06 00 00 00 00" value="${escHtml(d.phone||'')}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email</label>
+              <input class="form-input" id="sub-email" placeholder="contact@entreprise.fr" value="${escHtml(d.email||'')}">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Notes</label>
+            <textarea class="form-input" id="sub-notes" rows="2" placeholder="Spécialités, disponibilités...">${escHtml(d.notes||'')}</textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" id="modal-cancel">Annuler</button>
+          <button class="btn btn-primary" id="btn-save-sub">${isEdit ? 'Modifier' : 'Ajouter'}</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ── Events ──
+function attachEvents() {
+  // Nav
+  document.querySelectorAll('[data-nav]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.view = btn.dataset.nav;
+      state.selectedProjectId = null;
+      render();
+    });
+  });
+
+  // Theme toggle
+  const themeBtn = document.getElementById('theme-toggle');
+  if (themeBtn) {
+    themeBtn.addEventListener('click', () => {
+      const cur = document.documentElement.getAttribute('data-theme') || 'light';
+      document.documentElement.setAttribute('data-theme', cur === 'light' ? 'dark' : 'light');
+    });
+  }
+
+  // Project cards
+  document.querySelectorAll('[data-project-id]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.selectedProjectId = btn.dataset.projectId;
+      state.view = 'project-detail';
+      render();
+    });
+  });
+
+  // New project button(s)
+  ['btn-new-project', 'btn-new-project-2'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('click', openNewProjectModal);
+  });
+
+  // Back
+  const backBtn = document.getElementById('btn-back');
+  if (backBtn) backBtn.addEventListener('click', () => { state.view = 'projects'; state.selectedProjectId = null; render(); });
+
+  // Export PDF
+  const btnPdf = document.getElementById('btn-export-pdf');
+  if (btnPdf) btnPdf.addEventListener('click', exportPdf);
+
+  // Delete project
+  document.querySelectorAll('[data-delete-project]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!confirm('Supprimer ce chantier ?')) return;
+      state.projects = state.projects.filter(p => p.id !== btn.dataset.deleteProject);
+      saveProjects();
+      state.view = 'projects';
+      state.selectedProjectId = null;
+      render();
+    });
+  });
+
+  // Sub buttons
+  ['btn-new-sub', 'btn-new-sub-2'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('click', () => openSubModal());
+  });
+  document.querySelectorAll('[data-edit-sub]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const sub = state.subcontractors.find(s => s.id === btn.dataset.editSub);
+      if (sub) openSubModal(sub);
+    });
+  });
+  document.querySelectorAll('[data-delete-sub]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (!confirm('Supprimer ce sous-traitant ?')) return;
+      state.subcontractors = state.subcontractors.filter(s => s.id !== btn.dataset.deleteSub);
+      saveSubs();
+      render();
+    });
+  });
+
+  // Settings
+  const saveApiBtn = document.getElementById('btn-save-apikey');
+  if (saveApiBtn) saveApiBtn.addEventListener('click', () => {
+    const val = document.getElementById('input-apikey').value.trim();
+    saveApiKey(val);
+    render();
+  });
+  const clearBtn = document.getElementById('btn-clear-data');
+  if (clearBtn) clearBtn.addEventListener('click', () => {
+    if (!confirm('Effacer toutes les données ? Cette action est irréversible.')) return;
+    localStorage.removeItem('pc_projects');
+    localStorage.removeItem('pc_subs');
+    state.projects = [];
+    state.subcontractors = [];
+    render();
+  });
+
+  // Modal overlay close
+  const overlay = document.getElementById('modal-overlay');
+  if (overlay) overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) closeModal();
+  });
+  const closeBtn = document.getElementById('modal-close');
+  if (closeBtn) closeBtn.addEventListener('click', closeModal);
+  const cancelBtn = document.getElementById('modal-cancel');
+  if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+
+  // New project modal steps
+  const btnStepDevis = document.getElementById('btn-step-devis');
+  if (btnStepDevis) btnStepDevis.addEventListener('click', () => {
+    const name = document.getElementById('modal-name')?.value.trim();
+    if (!name) { alert('Le nom du chantier est obligatoire.'); return; }
+    state.modalData.name = name;
+    state.modalData.address = document.getElementById('modal-address')?.value.trim();
+    state.modalData.startDate = document.getElementById('modal-date')?.value || new Date().toISOString().split('T')[0];
+    state.modalStep = 'devis';
+    render();
+  });
+
+  const btnBackInfo = document.getElementById('btn-back-info');
+  if (btnBackInfo) btnBackInfo.addEventListener('click', () => {
+    state.modalStep = 'info';
+    state.modalError = null;
+    render();
+  });
+
+  // Upload zone
+  const uploadZone = document.getElementById('upload-zone');
+  const fileInput = document.getElementById('file-input');
+  if (uploadZone && fileInput) {
+    uploadZone.addEventListener('click', () => fileInput.click());
+    uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag'); });
+    uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag'));
+    uploadZone.addEventListener('drop', e => {
+      e.preventDefault();
+      uploadZone.classList.remove('drag');
+      const file = e.dataTransfer.files[0];
+      if (file) handleFileUpload(file);
+    });
+    fileInput.addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (file) handleFileUpload(file);
+    });
+  }
+
+  const btnChangeDevis = document.getElementById('btn-change-devis');
+  if (btnChangeDevis) btnChangeDevis.addEventListener('click', () => {
+    state.modalData.devisFileName = null;
+    state.modalData.devisText = '';
+    render();
+  });
+
+  // Devis textarea live sync
+  const devisTextarea = document.getElementById('modal-devis-text');
+  if (devisTextarea) {
+    devisTextarea.addEventListener('input', () => {
+      state.modalData.devisText = devisTextarea.value;
+      // Update generate button disabled state
+      const genBtn = document.getElementById('btn-generate');
+      if (genBtn) genBtn.disabled = !devisTextarea.value.trim();
+    });
+  }
+
+  // Generate
+  const btnGenerate = document.getElementById('btn-generate');
+  if (btnGenerate) btnGenerate.addEventListener('click', generatePlanning);
+
+  // Re-generate
+  const btnRegen = document.getElementById('btn-regen');
+  if (btnRegen) btnRegen.addEventListener('click', () => {
+    state.modalStep = 'devis';
+    state.modalError = null;
+    render();
+  });
+
+  // Save project
+  const btnSaveProject = document.getElementById('btn-save-project');
+  if (btnSaveProject) btnSaveProject.addEventListener('click', () => {
+    const d = state.modalData;
+    const project = {
+      id: uid(),
+      name: d.name,
+      address: d.address || '',
+      startDate: d.startDate,
+      lots: d.generatedLots || [],
+      devisFileName: d.devisFileName || '',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    state.projects.unshift(project);
+    saveProjects();
+    closeModal();
+    state.view = 'project-detail';
+    state.selectedProjectId = project.id;
+    render();
+  });
+
+  // Sub pickers
+  document.querySelectorAll('.sub-picker').forEach(picker => {
+    const lotId = picker.dataset.pickerLot;
+    const projectId = picker.dataset.pickerProject;
+    const btn = picker.querySelector('[data-picker-toggle]');
+    const list = picker.querySelector('.sub-picker-list');
+
+    btn.addEventListener('click', () => {
+      // Close other open pickers
+      document.querySelectorAll('.sub-picker-list').forEach(l => { if (l !== list) l.hidden = true; });
+      list.hidden = !list.hidden;
+    });
+
+    picker.querySelectorAll('[data-picker-value]').forEach(item => {
+      item.addEventListener('click', () => {
+        const val = item.dataset.pickerValue || null;
+        updateProjectLot(projectId, lotId, { subcontractorId: val });
+        list.hidden = true;
+        render();
+      });
+    });
+  });
+
+  // Lot: expand/collapse edit panel
+  document.querySelectorAll('[data-expand-lot]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const lotId = btn.dataset.expandLot;
+      state.expandedLotId = state.expandedLotId === lotId ? null : lotId;
+      render();
+    });
+  });
+
+  // Lot: cycle status on badge click
+  document.querySelectorAll('[data-cycle-status]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const lotId = btn.dataset.cycleStatus;
+      const projectId = btn.dataset.projectId;
+      const project = state.projects.find(p => p.id === projectId);
+      const lot = project?.lots.find(l => l.id === lotId);
+      if (!lot) return;
+      const cur = lot.status || 'todo';
+      const idx = STATUS_CYCLE.indexOf(cur);
+      const next = STATUS_CYCLE[(idx + 1) % STATUS_CYCLE.length];
+      const changes = { status: next };
+      if (next === 'done') changes.progress = 100;
+      if (next === 'todo') changes.progress = 0;
+      updateProjectLot(projectId, lotId, changes);
+      render();
+    });
+  });
+
+  // Lot: field change (status select, subcontractor, progress range)
+  document.querySelectorAll('[data-lot-field]').forEach(input => {
+    const field = input.dataset.lotField;
+    const lotId = input.dataset.lotId;
+    const projectId = input.dataset.projectId;
+    if (field === 'progress') {
+      input.addEventListener('input', () => {
+        const pctEl = document.getElementById(`pct-${lotId}`);
+        if (pctEl) pctEl.textContent = input.value + '%';
+      });
+      input.addEventListener('change', () => {
+        updateProjectLot(projectId, lotId, { progress: parseInt(input.value) });
+        render();
+      });
+    } else {
+      input.addEventListener('change', () => {
+        const val = field === 'subcontractorId' ? (input.value || null) : input.value;
+        const changes = { [field]: val };
+        if (field === 'status' && val === 'done') changes.progress = 100;
+        if (field === 'status' && val === 'todo') changes.progress = 0;
+        updateProjectLot(projectId, lotId, changes);
+        render();
+      });
+    }
+  });
+
+  // Color swatches
+  document.querySelectorAll('#sub-color-swatches .color-swatch').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const color = btn.dataset.color;
+      document.getElementById('sub-color').value = color;
+      document.querySelectorAll('#sub-color-swatches .color-swatch').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+    });
+  });
+
+  // Save sub
+  const btnSaveSub = document.getElementById('btn-save-sub');
+  if (btnSaveSub) btnSaveSub.addEventListener('click', saveSub);
+}
+
+// ── Modal helpers ──
+function openNewProjectModal() {
+  state.modal = 'new-project';
+  state.modalStep = 'info';
+  state.modalError = null;
+  state.modalData = { name:'', address:'', startDate: new Date().toISOString().split('T')[0], devisText:'', devisFileName:'' };
+  render();
+}
+
+function openSubModal(sub) {
+  state.modal = sub ? 'edit-sub' : 'new-sub';
+  state.editingSubId = sub ? sub.id : null;
+  // Auto-pick next unused color for new subs
+  const usedColors = new Set(state.subcontractors.map(s => s.color).filter(Boolean));
+  const autoColor = SUB_COLORS.find(c => !usedColors.has(c)) || SUB_COLORS[state.subcontractors.length % SUB_COLORS.length];
+  state.modalData = sub ? { ...sub } : { name:'', category:'gros_oeuvre', phone:'', email:'', notes:'', color: autoColor };
+  render();
+}
+
+function closeModal() {
+  state.modal = null;
+  state.modalData = {};
+  state.modalStep = 'info';
+  state.modalError = null;
+  render();
+}
+
+// ── File upload ──
+async function handleFileUpload(file) {
+  if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
+    // Try pdf.js if available, else read as binary (will be garbled for PDF but user can paste text)
+    try {
+      const text = await parsePdf(file);
+      state.modalData.devisText = text;
+      state.modalData.devisFileName = file.name;
+      render();
+    } catch(e) {
+      state.modalError = 'Impossible de lire ce PDF. Collez le texte du devis directement dans le champ ci-dessous.';
+      state.modalData.devisFileName = file.name;
+      render();
+    }
+  } else {
+    // Text file
+    const text = await file.text();
+    state.modalData.devisText = text;
+    state.modalData.devisFileName = file.name;
+    render();
+  }
+}
+
+async function parsePdf(file) {
+  if (!window.pdfjsLib) {
+    await new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+      script.onload = resolve;
+      script.onerror = reject;
+      document.head.appendChild(script);
+    });
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  }
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  let fullText = '';
+
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+
+    // Group items by their Y position (rounded to nearest 2px) to reconstruct lines
+    const lineMap = new Map();
+    for (const item of content.items) {
+      if (!item.str) continue;
+      const y = Math.round(item.transform[5] / 2) * 2; // round to 2px bucket
+      if (!lineMap.has(y)) lineMap.set(y, []);
+      lineMap.get(y).push({ x: item.transform[4], str: item.str });
+    }
+
+    // Sort lines top-to-bottom (PDF y-axis is bottom-up, so sort descending)
+    const sortedYs = [...lineMap.keys()].sort((a, b) => b - a);
+
+    for (const y of sortedYs) {
+      const items = lineMap.get(y).sort((a, b) => a.x - b.x);
+      // Join items on the same line with a space, collapse multiple spaces
+      const line = items.map(it => it.str).join('  ').replace(/\s{3,}/g, '   ').trim();
+      if (line) fullText += line + '\n';
+    }
+    fullText += '\n';
+  }
+  return fullText;
+}
+
+// ── AI generation ──
+
+// Strip obvious header/footer noise from a devis before sending to AI
+function preprocessDevis(text) {
+  const lines = text.split('\n');
+  // Remove leading lines that look like address/header (no numbers, short lines before actual content)
+  let contentStart = 0;
+  for (let i = 0; i < Math.min(lines.length, 30); i++) {
+    const l = lines[i].trim();
+    // Stop stripping once we see a price/quantity line or a section title
+    if (/\d{2,}[\s,.]/.test(l) && l.length > 20) { contentStart = i; break; }
+  }
+  return lines.slice(contentStart).join('\n');
+}
+
+async function callGemini(prompt, attempt) {
+  // gemini-3-flash-preview works on free AQ... keys; 1.5-flash as fallback for overload
+  const MODELS = ['gemini-3-flash-preview', 'gemini-1.5-flash'];
+  const model = MODELS[attempt % MODELS.length];
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(state.apiKey)}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.3, maxOutputTokens: 4096 },
+      }),
+    }
+  );
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    const msg = err.error?.message || `Erreur API (${response.status})`;
+    const isOverload = response.status === 503
+      || msg.toLowerCase().includes('demand')
+      || msg.toLowerCase().includes('overload')
+      || msg.toLowerCase().includes('unavailable');
+    const isQuota = response.status === 429
+      || msg.toLowerCase().includes('quota')
+      || msg.toLowerCase().includes('exceeded');
+    // Extract suggested retry delay if present ("Please retry in Xs")
+    const retryMatch = msg.match(/retry in ([\d.]+)s/i);
+    const retryAfter = retryMatch ? Math.ceil(parseFloat(retryMatch[1])) : null;
+    throw Object.assign(new Error(msg), { isOverload, isQuota, retryAfter });
+  }
+  return response.json();
+}
+
+async function generatePlanning() {
+  const d = state.modalData;
+  const rawText = d.devisText || '';
+  if (!rawText.trim()) return;
+
+  state.modalStep = 'generating';
+  state.modalError = null;
+  render();
+
+  const text = preprocessDevis(rawText);
+
+  const subsDescription = state.subcontractors.length > 0
+    ? state.subcontractors.map(s =>
+        `- ID:${s.id} | ${TRADE_LABELS[s.category]}: ${s.name}${s.phone ? ` (${s.phone})` : ''}`
+      ).join('\n')
+    : 'Aucun sous-traitant renseigné';
+
+  const prompt = `Tu es un expert en planification de chantier BTP.
+Analyse ce devis et génère un planning prévisionnel détaillé.
+
+PROJET: ${d.name}
+
+SOUS-TRAITANTS DISPONIBLES (utilise leur ID exact pour l'assignation):
+${subsDescription}
+
+DEVIS:
+${text.slice(0, 16000)}
+
+Réponds UNIQUEMENT avec un objet JSON valide, sans texte avant ou après :
+{
+  "lots": [
+    {
+      "id": "lot-1",
+      "name": "Isolation Chambre 1",
+      "category": "isolation",
+      "startWeek": 0,
+      "durationWeeks": 1,
+      "description": "Description courte",
+      "subcontractorId": null
+    }
+  ],
+  "totalWeeks": 20,
+  "summary": "Résumé du projet en 2 phrases"
+}
+
+Catégories disponibles: ${TRADE_KEYS.join(', ')}
+
+Règles IMPORTANTES:
+- startWeek commence à 0
+- Les lots peuvent se chevaucher si logique (ex: élec + plomberie en parallèle)
+- Assigne les sous-traitants (subcontractorId = leur ID exact) si leur catégorie correspond
+- Durées réalistes : maison individuelle 52-78 semaines, rénovation légère 4-12 semaines, extension 20-30 semaines
+- Respecte l'ordre : VRD → gros œuvre → charpente → couverture → menuiseries ext → isolation → électricité + plomberie (en parallèle) → plâtrerie → carrelage → peinture → finitions
+- IMPORTANT: Si le devis mentionne la même prestation dans plusieurs pièces, crée UN LOT SÉPARÉ par pièce avec le nom de la pièce dans le nom du lot. Ex: "Isolation Salon", "Isolation Chambre 1".
+- Le nom du lot doit inclure la pièce/zone si applicable. Si pas de pièce spécifique, reste générique.`;
+
+  const MAX_RETRIES = 4;
+  let lastError = null;
+
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    if (attempt > 0) {
+      // If API told us how long to wait, respect it (capped at 60s); else exponential backoff
+      const waitSec = lastError?.retryAfter ? Math.min(lastError.retryAfter, 60) : attempt * 5;
+      state.modalError = `Modèle surchargé — nouvelle tentative dans ${waitSec}s… (${attempt}/${MAX_RETRIES - 1})`;
+      render();
+      await new Promise(r => setTimeout(r, waitSec * 1000));
+      state.modalError = null;
+    }
+
+    try {
+      const data = await callGemini(prompt, attempt);
+      const rawResp = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      const jsonMatch = rawResp.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) throw new Error('Réponse invalide — réessayez');
+
+      const planning = JSON.parse(jsonMatch[0]);
+      state.modalData.generatedLots = planning.lots || [];
+      state.modalData.totalWeeks = planning.totalWeeks || 0;
+      state.modalData.summary = planning.summary || '';
+      state.modalStep = 'result';
+      state.modalError = null;
+      render();
+      return;
+    } catch(e) {
+      lastError = e;
+      // Quota dépassé = inutile de réessayer immédiatement
+      if (e.isQuota && !e.retryAfter) break;
+      // Erreur autre que surcharge = on arrête
+      if (!e.isOverload && !e.isQuota) break;
+    }
+  }
+
+  // Friendly error message
+  let friendlyMsg = lastError?.message || 'Erreur lors de la génération';
+  if (lastError?.isQuota) {
+    const sec = lastError.retryAfter;
+    friendlyMsg = sec
+      ? `Quota temporairement dépassé — réessayez dans ${sec}s (limite gratuite Gemini).`
+      : 'Quota journalier Gemini dépassé. Réessayez demain ou vérifiez votre plan sur aistudio.google.com.';
+  } else if (lastError?.isOverload) {
+    friendlyMsg = 'Gemini surchargé après plusieurs tentatives — réessayez dans quelques minutes.';
+  }
+  state.modalError = friendlyMsg;
+  state.modalStep = 'devis';
+  render();
+}
+
+// ── Lot update ──
+function updateProjectLot(projectId, lotId, changes) {
+  state.projects = state.projects.map(p => {
+    if (p.id !== projectId) return p;
+    return {
+      ...p,
+      updatedAt: new Date().toISOString(),
+      lots: p.lots.map(l => l.id !== lotId ? l : { ...l, ...changes }),
+    };
+  });
+  saveProjects();
+}
+
+const STATUS_CYCLE = ['todo', 'in_progress', 'done', 'delayed'];
+
+// ── Sub save ──
+function saveSub() {
+  const name = document.getElementById('sub-name')?.value.trim();
+  if (!name) { alert('Le nom est obligatoire.'); return; }
+  const sub = {
+    id: state.editingSubId || uid(),
+    name,
+    color: document.getElementById('sub-color')?.value || SUB_COLORS[0],
+    category: document.getElementById('sub-category')?.value || 'autre',
+    phone: document.getElementById('sub-phone')?.value.trim(),
+    email: document.getElementById('sub-email')?.value.trim(),
+    notes: document.getElementById('sub-notes')?.value.trim(),
+  };
+  if (state.modal === 'edit-sub') {
+    state.subcontractors = state.subcontractors.map(s => s.id === sub.id ? sub : s);
+  } else {
+    state.subcontractors.push(sub);
+  }
+  saveSubs();
+  closeModal();
+}
+
+// ── PDF Export ──
+function exportPdf() {
+  const project = state.projects.find(p => p.id === state.selectedProjectId);
+  if (!project) return;
+  const lots = project.lots || [];
+  const totalWeeks = lots.length > 0 ? Math.max(...lots.map(l => {
+    const sd = l.startDay ?? l.startWeek * 7;
+    const dd = l.durationDays ?? l.durationWeeks * 7;
+    return Math.ceil((sd + dd) / 7);
+  })) : 4;
+
+  // Group lots by subcontractor
+  const bySubId = {};
+  lots.forEach(lot => {
+    const key = lot.subcontractorId || '__none__';
+    (bySubId[key] = bySubId[key] || []).push(lot);
+  });
+
+  const D = 18; // smaller px/day for print
+  const totalDays = totalWeeks * 7;
+  const totalPx = totalDays * D;
+  const startD = new Date(project.startDate);
+  const DAYS_FR = ['Di','Lu','Ma','Me','Je','Ve','Sa'];
+
+  // Build mini Gantt for print (simplified)
+  const dayTicksPrint = Array.from({length: totalDays}, (_, i) => {
+    const d = new Date(startD); d.setDate(d.getDate() + i);
+    const isSun = d.getDay() === 0;
+    const isMonthStart = d.getDate() === 1;
+    const bg = isSun ? '#e0e0e0' : 'transparent';
+    const border = isMonthStart ? '2px solid #1C4CE8' : '1px solid #ddd';
+    const label = isSun ? '' : (isMonthStart ? `<span style="font-size:7px">${d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'})}</span>` : `<span style="font-size:7px">${d.getDate()}</span>`);
+    return `<div style="width:${D}px;flex-shrink:0;background:${bg};border-right:${border};text-align:center;font-size:6px;color:#888;padding-top:2px;box-sizing:border-box">${label}</div>`;
+  }).join('');
+
+  const ganttRowsPrint = lots.map(lot => {
+    const sub = state.subcontractors.find(s => s.id === lot.subcontractorId);
+    const color = sub?.color || TRADE_COLORS[lot.category] || '#6B7280';
+    const sd = lot.startDay ?? lot.startWeek * 7;
+    const dd = lot.durationDays ?? lot.durationWeeks * 7;
+    const leftPx = sd * D;
+    const widthPx = Math.max(dd * D - 1, D - 1);
+    const startDateLot = new Date(startD); startDateLot.setDate(startDateLot.getDate() + sd);
+    const wd = workingDaysInRange(startDateLot, dd);
+    const labelText = sub ? `${lot.name} — ${sub.name}` : lot.name;
+    return `
+      <div style="display:flex;height:22px;border-bottom:1px solid #f0f0f0">
+        <div style="width:180px;flex-shrink:0;font-size:9px;padding:0 6px;display:flex;align-items:center;overflow:hidden;white-space:nowrap;border-right:1px solid #ddd">
+          <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${color};margin-right:4px;flex-shrink:0"></span>
+          <span style="overflow:hidden;text-overflow:ellipsis">${escHtml(lot.name)}</span>
+        </div>
+        <div style="position:relative;width:${totalPx}px;flex-shrink:0;overflow:hidden">
+          ${Array.from({length: totalDays}, (_, i) => {
+            const d2 = new Date(startD); d2.setDate(d2.getDate() + i);
+            return d2.getDay() === 0 ? `<div style="position:absolute;top:0;bottom:0;left:${i*D}px;width:${D}px;background:#e0e0e0"></div>` : '';
+          }).join('')}
+          <div style="position:absolute;top:3px;height:16px;left:${leftPx}px;width:${widthPx}px;background:${color};border-radius:3px;display:flex;align-items:center;padding:0 4px;overflow:hidden">
+            <span style="font-size:7px;color:#fff;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(labelText)}</span>
+          </div>
+        </div>
+        <div style="width:55px;flex-shrink:0;font-size:8px;color:#666;display:flex;align-items:center;padding:0 4px;border-left:1px solid #ddd">${wd}j ouvrés</div>
+      </div>`;
+  }).join('');
+
+  // Subcontractor detail tables
+  const subDetails = Object.entries(bySubId).map(([subId, subLots]) => {
+    const sub = subId === '__none__' ? null : state.subcontractors.find(s => s.id === subId);
+    const color = sub?.color || '#6B7280';
+    const rows = subLots.map(lot => {
+      const sd = lot.startDay ?? lot.startWeek * 7;
+      const dd = lot.durationDays ?? lot.durationWeeks * 7;
+      const startDateLot = new Date(startD); startDateLot.setDate(startDateLot.getDate() + sd);
+      const endDateLot = new Date(startD); endDateLot.setDate(endDateLot.getDate() + sd + dd - 1);
+      const wd = workingDaysInRange(startDateLot, dd);
+      const fmt = d => d.toLocaleDateString('fr-FR', {day:'numeric', month:'short', year:'numeric'});
+      const status = lot.status || 'todo';
+      const sc = STATUS_CONFIG[status];
+      return `<tr>
+        <td style="padding:5px 8px;border-bottom:1px solid #f0f0f0;font-size:9px;font-weight:600">${escHtml(lot.name)}</td>
+        <td style="padding:5px 8px;border-bottom:1px solid #f0f0f0;font-size:9px;color:#555">${fmt(startDateLot)}</td>
+        <td style="padding:5px 8px;border-bottom:1px solid #f0f0f0;font-size:9px;color:#555">${fmt(endDateLot)}</td>
+        <td style="padding:5px 8px;border-bottom:1px solid #f0f0f0;font-size:9px;color:#555">${wd} j ouvrés</td>
+        <td style="padding:5px 8px;border-bottom:1px solid #f0f0f0;font-size:9px">${sc.dot} ${sc.label} ${lot.progress ? '· ' + lot.progress + '%' : ''}</td>
+        <td style="padding:5px 8px;border-bottom:1px solid #f0f0f0;font-size:9px;color:#666">${escHtml(lot.description||'')}</td>
+      </tr>`;
+    }).join('');
+    return `
+      <div style="margin-top:20px;break-inside:avoid">
+        <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#f8f8f8;border-left:4px solid ${color};border-radius:0 4px 4px 0;margin-bottom:4px">
+          <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${color}"></span>
+          <strong style="font-size:11px">${sub ? escHtml(sub.name) : 'Non assigné'}</strong>
+          ${sub?.phone ? `<span style="font-size:10px;color:#666">· ${escHtml(sub.phone)}</span>` : ''}
+          ${sub?.email ? `<span style="font-size:10px;color:#666">· ${escHtml(sub.email)}</span>` : ''}
+        </div>
+        <table style="width:100%;border-collapse:collapse">
+          <thead>
+            <tr style="background:#f0f0f0">
+              <th style="padding:5px 8px;text-align:left;font-size:9px;font-weight:700;border-bottom:2px solid #ddd">Lot / Tâche</th>
+              <th style="padding:5px 8px;text-align:left;font-size:9px;font-weight:700;border-bottom:2px solid #ddd">Début</th>
+              <th style="padding:5px 8px;text-align:left;font-size:9px;font-weight:700;border-bottom:2px solid #ddd">Fin</th>
+              <th style="padding:5px 8px;text-align:left;font-size:9px;font-weight:700;border-bottom:2px solid #ddd">Durée</th>
+              <th style="padding:5px 8px;text-align:left;font-size:9px;font-weight:700;border-bottom:2px solid #ddd">Statut</th>
+              <th style="padding:5px 8px;text-align:left;font-size:9px;font-weight:700;border-bottom:2px solid #ddd">Description</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+  }).join('');
+
+  const startLabel = new Date(project.startDate).toLocaleDateString('fr-FR', {day:'numeric', month:'long', year:'numeric'});
+  const html = `<!DOCTYPE html>
+<html lang="fr"><head><meta charset="UTF-8">
+<title>Planning — ${escHtml(project.name)}</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, 'Segoe UI', Arial, sans-serif; color: #1a1a18; font-size: 10px; }
+  h1 { font-size: 16px; font-weight: 700; margin-bottom: 2px; }
+  h2 { font-size: 12px; font-weight: 600; margin: 20px 0 8px; border-bottom: 2px solid #1C4CE8; padding-bottom: 4px; color: #1C4CE8; }
+  @page { margin: 12mm; size: A3 landscape; }
+  @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+</style>
+</head><body>
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+    <div>
+      <h1>${escHtml(project.name)}</h1>
+      ${project.address ? `<div style="font-size:10px;color:#666;margin-top:2px">${escHtml(project.address)}</div>` : ''}
+    </div>
+    <div style="text-align:right;font-size:9px;color:#666">
+      <div>Début : ${startLabel}</div>
+      <div>Durée : ~${totalWeeks} semaines · ${lots.length} lots</div>
+      <div>Généré le ${new Date().toLocaleDateString('fr-FR')}</div>
+    </div>
+  </div>
+
+  <h2>Planning Gantt</h2>
+  <div style="overflow-x:auto">
+    <div style="min-width:${totalPx + 180 + 55}px">
+      <div style="display:flex;height:22px;border-bottom:2px solid #333">
+        <div style="width:180px;flex-shrink:0;border-right:1px solid #ddd"></div>
+        <div style="display:flex;width:${totalPx}px;flex-shrink:0">${dayTicksPrint}</div>
+        <div style="width:55px;flex-shrink:0;border-left:1px solid #ddd;font-size:8px;display:flex;align-items:center;padding:0 4px;color:#666">Durée</div>
+      </div>
+      ${ganttRowsPrint}
+    </div>
+  </div>
+
+  <h2>Détail par sous-traitant</h2>
+  ${subDetails}
+</body></html>`;
+
+  const win = window.open('', '_blank');
+  if (!win) { alert('Autorisez les pop-ups pour exporter en PDF.'); return; }
+  win.document.write(html);
+  win.document.close();
+  win.addEventListener('load', () => { win.print(); });
+}
+
+// ── Helpers ──
+function currentProjectId() { return state.selectedProjectId || ''; }
+
+// Count Mon-Sat days (working days) in a calendar range of calDays starting from a Date
+function workingDaysInRange(startDate, calDays) {
+  let count = 0;
+  for (let i = 0; i < calDays; i++) {
+    const d = new Date(startDate);
+    d.setDate(d.getDate() + i);
+    if (d.getDay() !== 0) count++; // exclude Sunday
+  }
+  return count;
+}
+
+// Snap a calendar-day offset to skip Sundays (if landing on Sunday, move to Monday)
+function skipSunday(projectStartDate, calDay) {
+  const d = new Date(projectStartDate);
+  d.setDate(d.getDate() + calDay);
+  if (d.getDay() === 0) return calDay + 1;
+  return calDay;
+}
+
+// Split working-day duration into calendar segments (skipping Sundays)
+// Returns [{calStart, calLen}, ...] where calStart/calLen are in calendar days
+function calcSegments(projectStartDate, startDay, durationWorkingDays) {
+  const base = new Date(projectStartDate);
+  const segments = [];
+  let calDay = startDay;
+  let workLeft = durationWorkingDays;
+  // Push start off Sunday
+  const sd0 = new Date(base); sd0.setDate(sd0.getDate() + calDay);
+  if (sd0.getDay() === 0) calDay++;
+  while (workLeft > 0) {
+    const segCalStart = calDay;
+    let segLen = 0;
+    while (workLeft > 0) {
+      const d = new Date(base); d.setDate(d.getDate() + calDay);
+      if (d.getDay() === 0) break; // hit Sunday — end this segment
+      segLen++; workLeft--; calDay++;
+    }
+    if (segLen > 0) segments.push({ calStart: segCalStart, calLen: segLen });
+    calDay++; // jump over Sunday
+  }
+  return segments;
+}
+
+// Convert calendar days span to working-day count (excl. Sundays) starting from a Date
+function calSpanToWorkingDays(projectStartDate, startDay, calSpan) {
+  const base = new Date(projectStartDate);
+  let wd = 0;
+  for (let i = 0; i < calSpan; i++) {
+    const d = new Date(base); d.setDate(d.getDate() + startDay + i);
+    if (d.getDay() !== 0) wd++;
+  }
+  return Math.max(1, wd);
+}
+
+// ── Gantt drag system (registered once at boot) ──
+const D_PX = 28; // must match D in renderGantt
+let _drag = null;
+const _tooltip = () => document.getElementById('drag-tooltip');
+
+function _lotDateLabel(projectId, startDay, durationWorkingDays) {
+  const project = state.projects.find(p => p.id === projectId);
+  if (!project) return '';
+  const base = new Date(project.startDate);
+  const segs = calcSegments(project.startDate, startDay, durationWorkingDays);
+  const s = new Date(base); s.setDate(s.getDate() + startDay);
+  const lastSeg = segs[segs.length - 1];
+  const e = lastSeg ? new Date(base) : s;
+  if (lastSeg) e.setDate(e.getDate() + lastSeg.calStart + lastSeg.calLen - 1);
+  const fmt = d => d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+  return `${fmt(s)} → ${fmt(e)}  (${durationWorkingDays} j ouvrés)`;
+}
+
+document.addEventListener('mousedown', e => {
+  const resizeEl = e.target.closest('[data-resize-lot]');
+  const dragEl = !resizeEl && e.target.closest('[data-drag-lot]');
+  if (!resizeEl && !dragEl) return;
+  e.preventDefault();
+
+  if (resizeEl) {
+    // Resize: grab the last segment's info
+    const lotId = resizeEl.dataset.resizeLot;
+    const projectId = resizeEl.dataset.resizeProject;
+    const firstBar = document.querySelector(`[data-drag-lot="${lotId}"]`);
+    const origStartDay = parseInt(firstBar?.dataset.startDay ?? 0, 10);
+    const origDurDays  = parseInt(firstBar?.dataset.durDays ?? 1, 10);
+    const lastSegStart = parseInt(resizeEl.dataset.resizeSegStart, 10);
+    const lastSegLen   = parseInt(resizeEl.dataset.resizeSegLen, 10);
+    const lastBar = resizeEl.closest('.gantt-bar-seg');
+    _drag = { type: 'resize', lastBar, lotId, projectId, startX: e.clientX, origStartDay, origDurDays, lastSegStart, lastSegLen };
+    lastBar.classList.add('dragging');
+  } else {
+    // Move: collect all segment bars for this lot
+    const lotId = dragEl.dataset.dragLot;
+    const projectId = dragEl.dataset.dragProject;
+    const origStartDay = parseInt(dragEl.dataset.startDay, 10);
+    const origDurDays  = parseInt(dragEl.dataset.durDays, 10);
+    const allSegs = [...document.querySelectorAll(`[data-lot-seg="${lotId}"]`)];
+    const origLefts = allSegs.map(s => parseFloat(s.dataset.segOrigLeft));
+    allSegs.forEach(s => s.classList.add('dragging'));
+    _drag = { type: 'move', allSegs, origLefts, lotId, projectId, startX: e.clientX, origStartDay, origDurDays };
+  }
+  document.body.style.cursor = resizeEl ? 'ew-resize' : 'grabbing';
+});
+
+document.addEventListener('mousemove', e => {
+  if (!_drag) return;
+  const dx = e.clientX - _drag.startX;
+  const snap = e.shiftKey ? 7 : 1;
+  const dayDelta = Math.round(dx / D_PX / snap) * snap;
+  const tip = _tooltip();
+
+  if (_drag.type === 'move') {
+    const newStartDay = Math.max(0, _drag.origStartDay + dayDelta);
+    const offsetPx = (newStartDay - _drag.origStartDay) * D_PX;
+    _drag.allSegs.forEach((seg, i) => { seg.style.left = (_drag.origLefts[i] + offsetPx) + 'px'; });
+    _drag.currentStartDay = newStartDay;
+    if (tip) { tip.style.display = 'block'; tip.style.left = (e.clientX + 14) + 'px'; tip.style.top = (e.clientY - 30) + 'px'; tip.textContent = _lotDateLabel(_drag.projectId, newStartDay, _drag.origDurDays); }
+  } else {
+    // Resize: extend last segment (in calendar days for preview, convert on drop)
+    const calDelta = Math.round(dx / D_PX / snap) * snap;
+    const newSegLen = Math.max(1, _drag.lastSegLen + calDelta);
+    _drag.lastBar.style.width = (newSegLen * D_PX - 2) + 'px';
+    _drag.currentCalDelta = calDelta;
+    const project = state.projects.find(p => p.id === _drag.projectId);
+    if (project && tip) {
+      const newWD = calSpanToWorkingDays(project.startDate, _drag.origStartDay, (_drag.lastSegStart - _drag.origStartDay) + newSegLen);
+      tip.style.display = 'block'; tip.style.left = (e.clientX + 14) + 'px'; tip.style.top = (e.clientY - 30) + 'px';
+      tip.textContent = _lotDateLabel(_drag.projectId, _drag.origStartDay, newWD);
+    }
+  }
+});
+
+document.addEventListener('mouseup', () => {
+  if (!_drag) return;
+  document.body.style.cursor = '';
+  const tip = _tooltip(); if (tip) tip.style.display = 'none';
+
+  if (_drag.type === 'move') {
+    _drag.allSegs.forEach(s => s.classList.remove('dragging'));
+    if (_drag.currentStartDay !== undefined) {
+      const project = state.projects.find(p => p.id === _drag.projectId);
+      const sd = project ? skipSunday(project.startDate, _drag.currentStartDay) : _drag.currentStartDay;
+      updateProjectLot(_drag.projectId, _drag.lotId, { startDay: sd, startWeek: Math.round(sd / 7) });
+    }
+  } else {
+    _drag.lastBar.classList.remove('dragging');
+    if (_drag.currentCalDelta !== undefined) {
+      const project = state.projects.find(p => p.id === _drag.projectId);
+      const newSegLen = Math.max(1, _drag.lastSegLen + _drag.currentCalDelta);
+      const totalCalSpan = (_drag.lastSegStart - _drag.origStartDay) + newSegLen;
+      const newWD = project ? calSpanToWorkingDays(project.startDate, _drag.origStartDay, totalCalSpan) : _drag.origDurDays;
+      updateProjectLot(_drag.projectId, _drag.lotId, { durationDays: newWD, durationWeeks: Math.max(1, Math.round(newWD / 6)) });
+    }
+  }
+  _drag = null;
+  render();
+});
+
+// ── Boot ──
+loadState();
+render();
+
+// Close sub-picker dropdowns on outside click — registered ONCE at boot
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.sub-picker')) {
+    document.querySelectorAll('.sub-picker-list').forEach(l => l.hidden = true);
+  }
+});
+</script>
+</body>
+</html>
