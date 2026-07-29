@@ -151,8 +151,18 @@ const MAX_RETRIES=4;
 // ─── State ───────────────────────────────────────────────────────────────────
 let state={view:'home',selectedProjectId:null,projects:[],subcontractors:[],apiKey:'',modal:null,modalData:{},modalStep:0,modalError:'',editingSubId:null,expandedLotId:null,activeTab:'calendar'};
 
-function loadState(){try{const s=localStorage.getItem('planning_state_v2');if(s)Object.assign(state,JSON.parse(s));}catch(e){}}
-function saveState(){try{localStorage.setItem('planning_state_v2',JSON.stringify(state));}catch(e){}}
+function loadState(){
+  try{
+    // Migration: try old key first, then new key
+    const old=localStorage.getItem('planning_state');
+    const cur=localStorage.getItem('planning_state_v2');
+    const raw=cur||old;
+    if(raw){Object.assign(state,JSON.parse(raw));}
+    // If we loaded from old key but not yet saved to new key, migrate now
+    if(old&&!cur){localStorage.setItem('planning_state_v2',old);}
+  }catch(e){}
+}
+function saveState(){try{localStorage.setItem('planning_state_v2',JSON.stringify(state));localStorage.setItem('planning_state',JSON.stringify(state));}catch(e){}}
 function setState(patch){Object.assign(state,patch);saveState();render();}
 function updateLot(projectId,lotId,changes){state.projects=state.projects.map(p=>p.id!==projectId?p:{...p,lots:p.lots.map(l=>l.id!==lotId?l:{...l,...changes})});saveState();}
 
