@@ -273,6 +273,8 @@ function renderHome(){
     <div class="topbar-title">🏗 Planning Chantier</div>
     <button class="btn btn-secondary" data-action="open-settings">⚙ Paramètres</button>
     <button class="btn btn-secondary" data-action="go-subs">👷 Sous-traitants</button>
+    <button class="btn btn-secondary no-print" data-action="export-data" title="Exporter toutes les données">⬇ Exporter</button>
+    <label class="btn btn-secondary no-print" style="cursor:pointer;margin:0" title="Importer des données depuis un export">⬆ Importer<input type="file" accept=".json" id="import-file-input" style="display:none"></label>
     <button class="btn btn-primary" data-action="new-project">+ Nouveau projet</button>
   </div>
   ${state.projects.length===0?`<div class="empty-state"><h3>Aucun projet</h3><p>Créez votre premier projet pour commencer.</p><br><button class="btn btn-primary" data-action="new-project">+ Créer un projet</button></div>`:`
@@ -761,6 +763,35 @@ function handleAction(action){
   if(action==='go-home')setState({view:'home',selectedProjectId:null,expandedLotId:null});
   if(action==='go-subs')setState({view:'subs'});
   if(action==='open-settings')setState({modal:'settings',modalError:''});
+
+  if(action==='export-data'){
+    const data=JSON.stringify(state,null,2);
+    const blob=new Blob([data],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    const d=new Date();const tag=`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+    a.href=url;a.download=`planning-chantier-export-${tag}.json`;
+    document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+  }
+
+  // Import file input
+  const importInput=document.getElementById('import-file-input');
+  if(importInput){
+    importInput.addEventListener('change',e=>{
+      const file=e.target.files?.[0];if(!file)return;
+      const reader=new FileReader();
+      reader.onload=ev=>{
+        try{
+          const imported=JSON.parse(ev.target.result);
+          if(!imported.projects)throw new Error('Fichier invalide');
+          if(!confirm(`Importer ${imported.projects?.length||0} projet(s) et ${imported.subcontractors?.length||0} sous-traitant(s) ?\n\nCela remplacera toutes vos données actuelles.`))return;
+          Object.assign(state,imported);
+          saveState();render();
+        }catch(err){alert('Erreur lors de l\'import : '+err.message);}
+      };
+      reader.readAsText(file);
+    });
+  }
   if(action==='new-project')setState({modal:'new-project',modalData:{},modalError:''});
   if(action==='add-lot')setState({modal:'add-lot',modalData:{},modalError:''});
   if(action==='add-sub')setState({modal:'add-sub',modalData:{},modalError:''});
