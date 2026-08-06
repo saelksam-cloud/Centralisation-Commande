@@ -52,6 +52,7 @@ button{cursor:pointer;font-family:inherit;border:none;background:none;}
 .tab{flex:1;padding:6px 12px;border-radius:4px;font-size:0.875rem;font-weight:500;color:var(--text-2);text-align:center;}
 .tab.active{background:var(--surface);color:var(--text-1);box-shadow:0 1px 3px rgba(0,0,0,0.1);}
 .lot-row{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);}
+.lot-row.drag-over{border-top:2px solid var(--accent);margin-top:-1px;}
 .lot-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:7px;}
 .lot-info{flex:1;min-width:0;}
 .lot-name{font-size:0.9375rem;font-weight:600;}
@@ -402,8 +403,9 @@ function renderLotRow(lot,projectId,projectStart){
   const allSubs=state.subcontractors;
   const catSubs=allSubs.filter(s=>s.category===lot.category);
 
-  return `<div class="lot-row" style="flex-direction:column;align-items:stretch;padding:10px 0">
+  return `<div class="lot-row" draggable="true" data-drag-lot="${esc(lot.id)}" data-project-id="${esc(projectId)}" style="flex-direction:column;align-items:stretch;padding:10px 0;transition:opacity .15s">
   <div style="display:flex;align-items:flex-start;gap:10px">
+    <div style="cursor:grab;color:var(--text-3);font-size:1.1rem;padding-top:4px;user-select:none" title="Glisser pour réordonner">⠿</div>
     <div class="lot-dot" style="background:${color};margin-top:7px"></div>
     <div class="lot-info" style="flex:1;min-width:0">
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
@@ -652,6 +654,43 @@ function attachEvents(){
     state.projects=state.projects.map(p=>p.id!==b.dataset.projectId?p:{...p,lots:p.lots.filter(l=>l.id!==b.dataset.deleteLot)});
     saveState();render();
   }));
+
+  // ── Lot drag-to-reorder ──
+  let dragLotId=null;
+  document.querySelectorAll('[data-drag-lot]').forEach(row=>{
+    row.addEventListener('dragstart',e=>{
+      dragLotId=row.dataset.dragLot;
+      row.style.opacity='0.4';
+      e.dataTransfer.effectAllowed='move';
+    });
+    row.addEventListener('dragend',()=>{
+      row.style.opacity='';
+      dragLotId=null;
+      document.querySelectorAll('[data-drag-lot]').forEach(r=>r.classList.remove('drag-over'));
+    });
+    row.addEventListener('dragover',e=>{
+      e.preventDefault();
+      e.dataTransfer.dropEffect='move';
+      document.querySelectorAll('[data-drag-lot]').forEach(r=>r.classList.remove('drag-over'));
+      row.classList.add('drag-over');
+    });
+    row.addEventListener('drop',e=>{
+      e.preventDefault();
+      const targetId=row.dataset.dragLot;
+      const projectId=row.dataset.projectId;
+      if(!dragLotId||dragLotId===targetId)return;
+      const project=state.projects.find(p=>p.id===projectId);
+      if(!project)return;
+      const lots=[...project.lots];
+      const fromIdx=lots.findIndex(l=>l.id===dragLotId);
+      const toIdx=lots.findIndex(l=>l.id===targetId);
+      if(fromIdx<0||toIdx<0)return;
+      const [moved]=lots.splice(fromIdx,1);
+      lots.splice(toIdx,0,moved);
+      state.projects=state.projects.map(p=>p.id!==projectId?p:{...p,lots});
+      saveState();render();
+    });
+  });
 
   // Sub picker
   document.querySelectorAll('.sub-picker').forEach(picker=>{
