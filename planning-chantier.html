@@ -145,7 +145,20 @@ const STATUS_CONFIG={todo:{label:'À faire',dot:'○',cls:'status-todo'},in_prog
 const STATUS_CYCLE=['todo','in_progress','done','delayed'];
 const MONTHS=['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
 const DAYS=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
-const MODELS=['gemini-2.5-flash-preview-05-20','gemini-2.5-flash','gemini-1.5-flash','gemini-1.5-flash-8b'];
+const MODELS_FALLBACK=['gemini-2.5-flash-preview-05-20','gemini-2.5-flash','gemini-1.5-flash','gemini-1.5-flash-8b','gemini-pro'];
+let _availableModels=null;
+async function getModels(){
+  if(_availableModels)return _availableModels;
+  try{
+    const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${state.apiKey}`);
+    if(r.ok){
+      const d=await r.json();
+      const list=(d.models||[]).filter(m=>m.supportedGenerationMethods?.includes('generateContent')&&m.name.toLowerCase().includes('flash')).map(m=>m.name.replace('models/',''));
+      if(list.length){_availableModels=list;return list;}
+    }
+  }catch(e){}
+  return MODELS_FALLBACK;
+}
 const MAX_RETRIES=4;
 
 // ─── State ───────────────────────────────────────────────────────────────────
@@ -194,15 +207,24 @@ function abbrevLot(name){
 function abbrevSub(name){const w=name.trim().split(/\s+/);return w.length===1?w[0].toUpperCase().slice(0,10):(w[0][0].toUpperCase()+'.'+w.slice(1).join('').toUpperCase()).slice(0,12);}
 
 // ─── Gemini ───────────────────────────────────────────────────────────────────
-async function callGemini(prompt,attempt){
-  const model=MODELS[attempt%MODELS.length];
+async function callGeminiWithModel(prompt,model){
   const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${state.apiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.2,maxOutputTokens:8192}})});
-  if(!r.ok){const e=await r.json().catch(()=>({}));const msg=e.error?.message||`Erreur API (${r.status})`;const isOv=r.status===503||msg.toLowerCase().includes('overload')||msg.toLowerCase().includes('demand');const isQ=r.status===429||msg.toLowerCase().includes('quota')||msg.toLowerCase().includes('rate');const isNF=r.status===404||msg.toLowerCase().includes('not found')||msg.toLowerCase().includes('not supported');const m=msg.match(/retry in ([\d.]+)s/i);throw Object.assign(new Error(msg),{isOverload:isOv,isQuota:isQ,isNotFound:isNF,retryAfter:m?Math.ceil(parseFloat(m[1])):null});}
+  if(!r.ok){const e=await r.json().catch(()=>({}));const msg=e.error?.message||`Erreur (${r.status})`;const isOv=r.status===503||msg.toLowerCase().includes('overload');const isQ=r.status===429||msg.toLowerCase().includes('quota');const isNF=r.status===404||msg.toLowerCase().includes('not found')||msg.toLowerCase().includes('not supported');const m=msg.match(/retry in ([\d.]+)s/i);throw Object.assign(new Error(msg),{isOverload:isOv,isQuota:isQ,isNotFound:isNF,retryAfter:m?Math.ceil(parseFloat(m[1])):null});}
   return r.json();
 }
 async function callGeminiRetry(prompt){
-  for(let i=0;i<=MAX_RETRIES;i++){try{return await callGemini(prompt,i);}catch(e){if(i===MAX_RETRIES)throw e;if(e.isNotFound){continue;}// try next model immediately
-    if(!e.isOverload&&!e.isQuota)throw e;await new Promise(r=>setTimeout(r,e.retryAfter?e.retryAfter*1000:Math.pow(2,i)*2000));}}
+  const models=await getModels();
+  let lastErr=null;
+  for(let i=0;i<models.length;i++){
+    try{return await callGeminiWithModel(prompt,models[i]);}
+    catch(e){
+      lastErr=e;
+      if(e.isNotFound||e.isQuota){continue;}// try next model
+      if(e.isOverload){await new Promise(r=>setTimeout(r,e.retryAfter?e.retryAfter*1000:3000));continue;}
+      throw e;// permanent error
+    }
+  }
+  throw lastErr||new Error('Aucun modèle disponible');
 }
 
 // ─── PDF extraction ───────────────────────────────────────────────────────────
