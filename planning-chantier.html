@@ -188,15 +188,21 @@ function fmtShort(date){const d=new Date(date);return `${d.getDate()} ${MONTHS[d
 function fmtFull(date){const d=new Date(date);return `${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;}
 
 // ─── Working-day calc ─────────────────────────────────────────────────────────
+function isWeekend(date){const d=new Date(date);return d.getDay()===0||d.getDay()===6;}
 function calcSegments(projectStart,startDay,workDays){
   const base=new Date(projectStart);const segs=[];let cal=startDay;let left=workDays;
-  const s0=addDays(base,cal);if(s0.getDay()===0)cal++;
+  // Skip if start is a weekend
+  while(isWeekend(addDays(base,cal)))cal++;
   while(left>0){const segStart=cal;let len=0;
-    while(left>0){const d=addDays(base,cal);if(d.getDay()===0)break;len++;left--;cal++;}
-    if(len>0)segs.push({calStart:segStart,calLen:len});cal++;}
+    while(left>0){const d=addDays(base,cal);if(isWeekend(d))break;len++;left--;cal++;}
+    if(len>0)segs.push({calStart:segStart,calLen:len});
+    while(isWeekend(addDays(base,cal)))cal++;}
   return segs;
 }
-function skipSunday(projectStart,calDay){const d=addDays(projectStart,calDay);return d.getDay()===0?calDay+1:calDay;}
+function skipWeekend(projectStart,calDay){
+  while(isWeekend(addDays(projectStart,calDay)))calDay++;
+  return calDay;
+}
 
 // ─── Abbreviations ────────────────────────────────────────────────────────────
 function abbrevLot(name){
@@ -347,13 +353,13 @@ function renderCalendar(project){
   let rows='';
   for(let day=0;day<totalDays;day++){
     const d=addDays(startDate,day);
-    const dow=d.getDay();const isSun=dow===0;
+    const dow=d.getDay();const isWE=dow===0||dow===6;
     const label=`${DAYS[dow]} ${d.getDate()} ${MONTHS[d.getMonth()]}`;
-    const dateCls=isSun?'cal-td-date is-sunday':'cal-td-date is-workday';
+    const dateCls=isWE?'cal-td-date is-sunday':'cal-td-date is-workday';
 
     const cells=data.map(({lot,active,mn,mx,color})=>{
-      const cls=isSun?'cal-cell is-sunday':'cal-cell';
-      if(!isSun&&active.has(day)){
+      const cls=isWE?'cal-cell is-sunday':'cal-cell';
+      if(!isWE&&active.has(day)){
         const isFirst=day===mn,isLast=day===mx;
         const r=isFirst&&isLast?'3px':isFirst?'3px 0 0 3px':isLast?'0 3px 3px 0':'0';
         const pct=lot.progress||0;
@@ -716,7 +722,7 @@ function handleAction(action){
     const name=document.getElementById('m-lot-name')?.value.trim();
     if(!name)return setState({modalError:'Nom du lot requis'});
     const proj=state.projects.find(p=>p.id===state.selectedProjectId);
-    const startDay=skipSunday(proj?.startDate,parseInt(document.getElementById('m-lot-start')?.value)||0);
+    const startDay=skipWeekend(proj?.startDate,parseInt(document.getElementById('m-lot-start')?.value)||0);
     const lot={id:genId(),name,category:document.getElementById('m-lot-cat')?.value||'autre',description:document.getElementById('m-lot-desc')?.value.trim()||'',startDay,durationDays:Math.max(1,parseInt(document.getElementById('m-lot-dur')?.value)||5),status:'todo',progress:0};
     state.projects=state.projects.map(p=>p.id!==state.selectedProjectId?p:{...p,lots:[...(p.lots||[]),lot]});
     setState({modal:null});
@@ -784,18 +790,18 @@ function exportPDF(project){
     let rows='';
     for(let day=dayStart;day<dayEnd;day++){
       const d=addDays(startDate,day);
-      const dow=d.getDay();const isSun=dow===0;
+      const dow=d.getDay();const isWE=dow===0||dow===6;
       const label=`${DAYS[dow]} ${d.getDate()} ${MONTHS[d.getMonth()]}`;
-      const rowBg=isSun?'background:#f3f4f6;color:#9ca3af;font-style:italic;':'';
+      const rowBg=isWE?'background:#f3f4f6;color:#9ca3af;font-style:italic;':'';
       const cells=lotData.map(({lot,active,mn,mx,color})=>{
-        const bg=isSun?'background:#f3f4f6':active.has(day)?`background:${color}CC`:'';
+        const bg=isWE?'background:#f3f4f6':active.has(day)?`background:${color}CC`:'';
         const isFirst=day===mn,isLast=day===mx;
         const r=isFirst&&isLast?'3px':isFirst?'3px 0 0 3px':isLast?'0 3px 3px 0':'0';
-        return `<td style="border:1px solid #e5e5e5;padding:1px 2px;${isSun?'background:#f3f4f6':''}">
-          ${!isSun&&active.has(day)?`<div style="height:14px;background:${color};border-radius:${r};opacity:0.85"></div>`:''}
+        return `<td style="border:1px solid #e5e5e5;padding:1px 2px;${isWE?'background:#f3f4f6':''}">
+          ${!isWE&&active.has(day)?`<div style="height:14px;background:${color};border-radius:${r};opacity:0.85"></div>`:''}
         </td>`;
       }).join('');
-      rows+=`<tr style="${rowBg}"><td style="border:1px solid #ddd;padding:2px 6px;white-space:nowrap;font-size:9px;font-weight:${isSun?'400':'600'};background:${isSun?'#f3f4f6':'#fff'}">${label}</td>${cells}</tr>`;
+      rows+=`<tr style="${rowBg}"><td style="border:1px solid #ddd;padding:2px 6px;white-space:nowrap;font-size:9px;font-weight:${isWE?'400':'600'};background:${isWE?'#f3f4f6':'#fff'}">${label}</td>${cells}</tr>`;
     }
     pagesHtml+=`<div style="page-break-after:${c<chunks-1?'always':'avoid'}">
       <div style="font-size:11px;font-weight:700;margin-bottom:6px;color:#333">${esc(project.name)} — Planning prévisionnel ${c>0?`(suite ${c+1}/${chunks})`:''}${c===0?` · Début: ${fmtFull(project.startDate)}`:''}</div>
@@ -865,7 +871,7 @@ async function runAI(){
     const raw=result.candidates?.[0]?.content?.parts?.[0]?.text||'';
     const m=raw.match(/\[[\s\S]*\]/);if(!m)throw new Error('Réponse IA invalide');
     const lots=JSON.parse(m[0]);if(!Array.isArray(lots)||!lots.length)throw new Error('Aucun lot généré');
-    const newLots=lots.map(l=>({id:genId(),name:l.name||'Sans nom',category:l.category||'autre',description:l.description||'',startDay:skipSunday(project.startDate,l.startDay??0),durationDays:Math.max(1,l.durationDays??5),status:'todo',progress:0}));
+    const newLots=lots.map(l=>({id:genId(),name:l.name||'Sans nom',category:l.category||'autre',description:l.description||'',startDay:skipWeekend(project.startDate,l.startDay??0),durationDays:Math.max(1,l.durationDays??5),status:'todo',progress:0}));
     state.projects=state.projects.map(p=>p.id!==state.selectedProjectId?p:{...p,lots:[...(p.lots||[]),...newLots]});
     setState({modal:null,modalStep:0,activeTab:'calendar'});
   }catch(e){setState({modalStep:0,modalError:e.message});}
