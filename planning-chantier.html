@@ -296,6 +296,7 @@ function renderProject(){
     <button class="btn btn-ghost" data-action="go-home">← Projets</button>
     <div class="topbar-title">${esc(project.name)}</div>
     <span style="font-size:0.8rem;color:var(--text-3)">Début: ${fmtFull(project.startDate)}</span>
+    <button class="btn btn-secondary no-print" data-action="sort-lots" title="Trier les lots par date de début">↕ Trier</button>
     <button class="btn btn-secondary no-print" data-action="add-lot">+ Lot</button>
     <button class="btn btn-secondary no-print" data-action="import-ai">🤖 Importer devis</button>
     <button class="btn btn-secondary no-print" data-action="export-pdf">📄 PDF</button>
@@ -747,6 +748,15 @@ function handleAction(action){
   if(action==='add-lot')setState({modal:'add-lot',modalData:{},modalError:''});
   if(action==='add-sub')setState({modal:'add-sub',modalData:{},modalError:''});
   if(action==='import-ai')setState({modal:'import-ai',modalData:{},modalError:'',modalStep:0});
+  if(action==='sort-lots'){
+    state.projects=state.projects.map(p=>{
+      if(p.id!==state.selectedProjectId)return p;
+      const lots=[...(p.lots||[])];
+      lots.sort((a,b)=>(a.startDay??0)-(b.startDay??0));
+      return{...p,lots};
+    });
+    saveState();render();
+  }
 
   if(action==='create-project'){
     const name=document.getElementById('m-proj-name')?.value.trim();
@@ -763,7 +773,12 @@ function handleAction(action){
     const proj=state.projects.find(p=>p.id===state.selectedProjectId);
     const startDay=skipWeekend(proj?.startDate,parseInt(document.getElementById('m-lot-start')?.value)||0);
     const lot={id:genId(),name,category:document.getElementById('m-lot-cat')?.value||'autre',description:document.getElementById('m-lot-desc')?.value.trim()||'',startDay,durationDays:Math.max(1,parseInt(document.getElementById('m-lot-dur')?.value)||5),status:'todo',progress:0};
-    state.projects=state.projects.map(p=>p.id!==state.selectedProjectId?p:{...p,lots:[...(p.lots||[]),lot]});
+    state.projects=state.projects.map(p=>{
+      if(p.id!==state.selectedProjectId)return p;
+      const merged=[...(p.lots||[]),lot];
+      merged.sort((a,b)=>(a.startDay??0)-(b.startDay??0));
+      return{...p,lots:merged};
+    });
     setState({modal:null});
   }
 
@@ -911,7 +926,12 @@ async function runAI(){
     const m=raw.match(/\[[\s\S]*\]/);if(!m)throw new Error('Réponse IA invalide');
     const lots=JSON.parse(m[0]);if(!Array.isArray(lots)||!lots.length)throw new Error('Aucun lot généré');
     const newLots=lots.map(l=>({id:genId(),name:l.name||'Sans nom',category:l.category||'autre',description:l.description||'',startDay:skipWeekend(project.startDate,l.startDay??0),durationDays:Math.max(1,l.durationDays??5),status:'todo',progress:0}));
-    state.projects=state.projects.map(p=>p.id!==state.selectedProjectId?p:{...p,lots:[...(p.lots||[]),...newLots]});
+    state.projects=state.projects.map(p=>{
+      if(p.id!==state.selectedProjectId)return p;
+      const merged=[...(p.lots||[]),...newLots];
+      merged.sort((a,b)=>(a.startDay??0)-(b.startDay??0));
+      return{...p,lots:merged};
+    });
     setState({modal:null,modalStep:0,activeTab:'calendar'});
   }catch(e){setState({modalStep:0,modalError:e.message});}
 }
