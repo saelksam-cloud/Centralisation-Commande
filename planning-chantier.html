@@ -842,32 +842,38 @@ function exportPDF(project){
   const totalDays=Math.max(...lotData.map(d=>isFinite(d.mx)?d.mx:0),14)+1;
   const chunks=Math.ceil(totalDays/CHUNK);
 
-  // Header columns HTML
-  const makeHeaders=()=>lotData.map(({lot,sub,color})=>{
-    const sc=STATUS_CONFIG[lot.status||'todo'];
-    return `<th style="border:1px solid #ddd;padding:4px 3px;text-align:center;vertical-align:bottom;background:#f8f8f8;font-size:9px;min-width:60px;max-width:90px;word-break:break-word;line-height:1.2">
-      <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
-        <span style="width:8px;height:8px;border-radius:50%;background:${color};display:inline-block"></span>
-        <span style="font-weight:700">${esc(abbrevLot(lot.name))}</span>
-        ${sub?`<span style="color:#888;font-size:8px">${esc(abbrevSub(sub.name))}</span>`:''}
-        <span style="font-size:8px;color:${sc.cls.includes('done')?'#16A34A':sc.cls.includes('progress')?'#1C4CE8':sc.cls.includes('delayed')?'#EA580C':'#888'}">${sc.dot} ${sc.label}</span>
-      </div>
-    </th>`;
-  }).join('');
-
   // Generate calendar pages
   let pagesHtml='';
   for(let c=0;c<chunks;c++){
     const dayStart=c*CHUNK;
     const dayEnd=Math.min(dayStart+CHUNK,totalDays);
+
+    // Only keep lots that have at least one active day in this chunk
+    const pageLots=lotData.filter(({active})=>{
+      for(let d=dayStart;d<dayEnd;d++){if(active.has(d))return true;}
+      return false;
+    });
+
+    // Header columns for this page only
+    const pageHeaders=pageLots.map(({lot,sub,color})=>{
+      const sc=STATUS_CONFIG[lot.status||'todo'];
+      return `<th style="border:1px solid #ddd;padding:4px 3px;text-align:center;vertical-align:bottom;background:#f8f8f8;font-size:9px;min-width:60px;max-width:90px;word-break:break-word;line-height:1.2">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+          <span style="width:8px;height:8px;border-radius:50%;background:${color};display:inline-block"></span>
+          <span style="font-weight:700">${esc(abbrevLot(lot.name))}</span>
+          ${sub?`<span style="color:#888;font-size:8px">${esc(abbrevSub(sub.name))}</span>`:''}
+          <span style="font-size:8px;color:${sc.cls.includes('done')?'#16A34A':sc.cls.includes('progress')?'#1C4CE8':sc.cls.includes('delayed')?'#EA580C':'#888'}">${sc.dot} ${sc.label}</span>
+        </div>
+      </th>`;
+    }).join('');
+
     let rows='';
     for(let day=dayStart;day<dayEnd;day++){
       const d=addDays(startDate,day);
       const dow=d.getDay();const isWE=dow===0||dow===6;
       const label=`${DAYS[dow]} ${d.getDate()} ${MONTHS[d.getMonth()]}`;
       const rowBg=isWE?'background:#f3f4f6;color:#9ca3af;font-style:italic;':'';
-      const cells=lotData.map(({lot,active,mn,mx,color})=>{
-        const bg=isWE?'background:#f3f4f6':active.has(day)?`background:${color}CC`:'';
+      const cells=pageLots.map(({active,mn,mx,color})=>{
         const isFirst=day===mn,isLast=day===mx;
         const r=isFirst&&isLast?'3px':isFirst?'3px 0 0 3px':isLast?'0 3px 3px 0':'0';
         return `<td style="border:1px solid #e5e5e5;padding:1px 2px;${isWE?'background:#f3f4f6':''}">
@@ -879,7 +885,7 @@ function exportPDF(project){
     pagesHtml+=`<div style="page-break-after:${c<chunks-1?'always':'avoid'}">
       <div style="font-size:11px;font-weight:700;margin-bottom:6px;color:#333">${esc(project.name)} — Planning prévisionnel ${c>0?`(suite ${c+1}/${chunks})`:''}${c===0?` · Début: ${fmtFull(project.startDate)}`:''}</div>
       <table style="border-collapse:collapse;width:100%;table-layout:fixed;font-family:sans-serif">
-        <thead><tr><th style="border:1px solid #ddd;padding:4px 6px;background:#f8f8f8;font-size:9px;min-width:80px;text-align:left">Date</th>${makeHeaders()}</tr></thead>
+        <thead><tr><th style="border:1px solid #ddd;padding:4px 6px;background:#f8f8f8;font-size:9px;min-width:80px;text-align:left">Date</th>${pageHeaders}</tr></thead>
         <tbody>${rows}</tbody>
       </table>
     </div>`;
