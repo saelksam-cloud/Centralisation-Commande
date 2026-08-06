@@ -118,7 +118,20 @@ button{cursor:pointer;font-family:inherit;border:none;background:none;}
   .card{box-shadow:none;border:none;}
   .cal-wrap{max-height:none;overflow:visible;border:none;}
   .app-shell{max-width:none;padding:0;}
-  @page{size:A3 landscape;margin:10mm;}
+  @page{size:A3 landscape;margin:8mm;}
+  /* Calendrier : adapte la largeur à la page */
+  .cal-table{width:100%!important;table-layout:fixed;}
+  .cal-th-lot{min-width:0!important;max-width:none!important;width:auto;padding:3px 2px;}
+  .cal-th-lot span{font-size:0.55rem!important;line-height:1.1;}
+  .cal-td-date{min-width:0!important;white-space:nowrap;font-size:0.65rem!important;padding:2px 4px;}
+  .cal-th-date{min-width:0!important;font-size:0.65rem!important;padding:4px 6px;}
+  .cal-cell{min-width:0!important;padding:1px;}
+  .cal-cell div{height:14px!important;}
+  /* Évite les coupures en milieu de ligne */
+  tr{page-break-inside:avoid;}
+  /* Récap sous-traitants */
+  .recap-table{font-size:0.7rem;}
+  .recap-table th,.recap-table td{padding:3px 5px;}
 }
 </style>
 </head>
