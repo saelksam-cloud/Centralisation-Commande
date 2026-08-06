@@ -200,6 +200,14 @@ function calcSegments(projectStart,startDay,workDays){
     while(isWeekend(addDays(base,cal)))cal++;}
   return segs;
 }
+// Convert a calendar date string (YYYY-MM-DD) to offset days from project start
+function dateToOffset(projectStart,dateStr){
+  const ps=new Date(projectStart);const dt=new Date(dateStr);
+  const diff=Math.round((dt-ps)/(1000*60*60*24));
+  return Math.max(0,diff);
+}
+// Format date as YYYY-MM-DD for input[type=date]
+function fmtInputDate(date){const d=new Date(date);const y=d.getFullYear();const m=String(d.getMonth()+1).padStart(2,'0');const dd=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${dd}`;}
 function skipWeekend(projectStart,calDay){
   while(isWeekend(addDays(projectStart,calDay)))calDay++;
   return calDay;
@@ -441,8 +449,8 @@ function renderLotRow(lot,projectId,projectStart){
         <input type="range" min="0" max="100" value="${progress}" data-lot-field="progress" data-lot-id="${esc(lot.id)}" data-project-id="${esc(projectId)}">
         <span id="pct-${esc(lot.id)}">${progress}%</span>
       </div></div>
-    <div class="form-group"><label class="form-label">Début (j+)</label>
-      <input type="number" class="form-input" min="0" value="${startDay}" data-lot-field="startDay" data-lot-id="${esc(lot.id)}" data-project-id="${esc(projectId)}"></div>
+    <div class="form-group"><label class="form-label">Date de début</label>
+      <input type="date" class="form-input" value="${fmtInputDate(startDate)}" data-lot-field="startDay" data-lot-id="${esc(lot.id)}" data-project-id="${esc(projectId)}" data-project-start="${esc(projectStart)}"></div>
     <div class="form-group"><label class="form-label">Durée (jours ouvrés)</label>
       <input type="number" class="form-input" min="1" value="${dur}" data-lot-field="durationDays" data-lot-id="${esc(lot.id)}" data-project-id="${esc(projectId)}"></div>
     <div class="form-group" style="grid-column:1/-1"><label class="form-label">Description</label>
@@ -555,7 +563,7 @@ function renderModal(){
       <div class="form-group"><label class="form-label">Catégorie</label>
         <select class="form-input" id="m-lot-cat">${Object.entries(TRADE_LABELS).map(([k,v])=>`<option value="${k}" ${(modalData.category||'gros_oeuvre')===k?'selected':''}>${v}</option>`).join('')}</select></div>
       <div class="form-grid" style="grid-template-columns:1fr 1fr">
-        <div class="form-group"><label class="form-label">Début (j+)</label><input type="number" class="form-input" id="m-lot-start" min="0" value="${modalData.startDay||0}"></div>
+        <div class="form-group"><label class="form-label">Date de début</label><input type="date" class="form-input" id="m-lot-start" value="${(()=>{const proj=state.projects.find(p=>p.id===state.selectedProjectId);return fmtInputDate(addDays(proj?.startDate||new Date(),modalData.startDay||0));})()}"></div>
         <div class="form-group"><label class="form-label">Durée (jours ouvrés)</label><input type="number" class="form-input" id="m-lot-dur" min="1" value="${modalData.durationDays||5}"></div>
       </div>
       <div class="form-group"><label class="form-label">Description</label><textarea class="form-input" id="m-lot-desc" rows="2" style="resize:vertical">${esc(modalData.description||'')}</textarea></div>
@@ -640,7 +648,16 @@ function attachEvents(){
     }else{
       const save=()=>{
         const v=input.value;
-        const ch={[field]:field==='startDay'||field==='durationDays'?parseInt(v):v};
+        let ch;
+        if(field==='startDay'){
+          // input is a date picker — convert to offset days from project start
+          const ps=input.dataset.projectStart;
+          const offset=dateToOffset(ps,v);
+          const adjusted=skipWeekend(ps,offset);
+          ch={startDay:adjusted};
+        } else {
+          ch={[field]:field==='durationDays'?parseInt(v):v};
+        }
         if(field==='status'&&v==='done')ch.progress=100;
         if(field==='status'&&v==='todo')ch.progress=0;
         updateLot(projectId,lotId,ch);
@@ -771,7 +788,9 @@ function handleAction(action){
     const name=document.getElementById('m-lot-name')?.value.trim();
     if(!name)return setState({modalError:'Nom du lot requis'});
     const proj=state.projects.find(p=>p.id===state.selectedProjectId);
-    const startDay=skipWeekend(proj?.startDate,parseInt(document.getElementById('m-lot-start')?.value)||0);
+    const startDateVal=document.getElementById('m-lot-start')?.value;
+    const rawOffset=startDateVal?dateToOffset(proj?.startDate,startDateVal):0;
+    const startDay=skipWeekend(proj?.startDate,rawOffset);
     const lot={id:genId(),name,category:document.getElementById('m-lot-cat')?.value||'autre',description:document.getElementById('m-lot-desc')?.value.trim()||'',startDay,durationDays:Math.max(1,parseInt(document.getElementById('m-lot-dur')?.value)||5),status:'todo',progress:0};
     state.projects=state.projects.map(p=>{
       if(p.id!==state.selectedProjectId)return p;
