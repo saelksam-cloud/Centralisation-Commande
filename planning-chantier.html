@@ -739,11 +739,120 @@ function handleAction(action){
   if(action==='export-pdf'){
     const project=state.projects.find(p=>p.id===state.selectedProjectId);
     if(!project)return;
-    const win=window.open('','_blank');if(!win)return;
-    const content=document.querySelector('.app-shell')?.innerHTML||'';
-    win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Planning ${project.name}</title><style>${document.querySelector('style').textContent}@page{size:A3 landscape;margin:10mm;}.no-print,.tabs,button{display:none!important;}.cal-wrap{max-height:none;overflow:visible;border:none;}.app-shell{max-width:none;padding:0;}</style></head><body><div class="app-shell">${content}</div></body></html>`);
-    win.document.close();setTimeout(()=>win.print(),800);
+    exportPDF(project);
   }
+}
+
+function exportPDF(project){
+  const lots=project.lots||[];
+  const startDate=new Date(project.startDate);
+  const CHUNK=28; // jours par page calendrier
+
+  // Precompute lot data
+  const lotData=lots.map(lot=>{
+    const startDay=lot.startDay??((lot.startWeek??0)*7);
+    const dur=lot.durationDays??((lot.durationWeeks??1)*6);
+    const segs=calcSegments(startDate,startDay,dur);
+    const active=new Set();let mn=Infinity,mx=-Infinity;
+    segs.forEach(seg=>{for(let d=seg.calStart;d<seg.calStart+seg.calLen;d++){active.add(d);if(d<mn)mn=d;if(d>mx)mx=d;}});
+    const sub=state.subcontractors.find(s=>s.id===lot.subcontractorId);
+    const color=sub?.color||TRADE_COLORS[lot.category]||'#6B7280';
+    return{lot,active,mn,mx,sub,color};
+  });
+
+  const totalDays=Math.max(...lotData.map(d=>isFinite(d.mx)?d.mx:0),14)+1;
+  const chunks=Math.ceil(totalDays/CHUNK);
+
+  // Header columns HTML
+  const makeHeaders=()=>lotData.map(({lot,sub,color})=>{
+    const sc=STATUS_CONFIG[lot.status||'todo'];
+    return `<th style="border:1px solid #ddd;padding:4px 3px;text-align:center;vertical-align:bottom;background:#f8f8f8;font-size:9px;min-width:60px;max-width:90px;word-break:break-word;line-height:1.2">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+        <span style="width:8px;height:8px;border-radius:50%;background:${color};display:inline-block"></span>
+        <span style="font-weight:700">${esc(abbrevLot(lot.name))}</span>
+        ${sub?`<span style="color:#888;font-size:8px">${esc(abbrevSub(sub.name))}</span>`:''}
+        <span style="font-size:8px;color:${sc.cls.includes('done')?'#16A34A':sc.cls.includes('progress')?'#1C4CE8':sc.cls.includes('delayed')?'#EA580C':'#888'}">${sc.dot} ${sc.label}</span>
+      </div>
+    </th>`;
+  }).join('');
+
+  // Generate calendar pages
+  let pagesHtml='';
+  for(let c=0;c<chunks;c++){
+    const dayStart=c*CHUNK;
+    const dayEnd=Math.min(dayStart+CHUNK,totalDays);
+    let rows='';
+    for(let day=dayStart;day<dayEnd;day++){
+      const d=addDays(startDate,day);
+      const dow=d.getDay();const isSun=dow===0;
+      const label=`${DAYS[dow]} ${d.getDate()} ${MONTHS[d.getMonth()]}`;
+      const rowBg=isSun?'background:#f3f4f6;color:#9ca3af;font-style:italic;':'';
+      const cells=lotData.map(({lot,active,mn,mx,color})=>{
+        const bg=isSun?'background:#f3f4f6':active.has(day)?`background:${color}CC`:'';
+        const isFirst=day===mn,isLast=day===mx;
+        const r=isFirst&&isLast?'3px':isFirst?'3px 0 0 3px':isLast?'0 3px 3px 0':'0';
+        return `<td style="border:1px solid #e5e5e5;padding:1px 2px;${isSun?'background:#f3f4f6':''}">
+          ${!isSun&&active.has(day)?`<div style="height:14px;background:${color};border-radius:${r};opacity:0.85"></div>`:''}
+        </td>`;
+      }).join('');
+      rows+=`<tr style="${rowBg}"><td style="border:1px solid #ddd;padding:2px 6px;white-space:nowrap;font-size:9px;font-weight:${isSun?'400':'600'};background:${isSun?'#f3f4f6':'#fff'}">${label}</td>${cells}</tr>`;
+    }
+    pagesHtml+=`<div style="page-break-after:${c<chunks-1?'always':'avoid'}">
+      <div style="font-size:11px;font-weight:700;margin-bottom:6px;color:#333">${esc(project.name)} — Planning prévisionnel ${c>0?`(suite ${c+1}/${chunks})`:''}${c===0?` · Début: ${fmtFull(project.startDate)}`:''}</div>
+      <table style="border-collapse:collapse;width:100%;table-layout:fixed;font-family:sans-serif">
+        <thead><tr><th style="border:1px solid #ddd;padding:4px 6px;background:#f8f8f8;font-size:9px;min-width:80px;text-align:left">Date</th>${makeHeaders()}</tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+  }
+
+  // Recap per sub
+  const subIds=[...new Set(lots.map(l=>l.subcontractorId).filter(Boolean))];
+  let recapHtml='';
+  if(subIds.length){
+    recapHtml=`<div style="page-break-before:always">
+      <h2 style="font-size:13px;font-weight:700;margin-bottom:12px;border-bottom:2px solid #333;padding-bottom:4px">Récapitulatif par sous-traitant</h2>
+      ${subIds.map(sid=>{
+        const sub=state.subcontractors.find(s=>s.id===sid);if(!sub)return'';
+        const color=sub.color||'#6B7280';
+        const subLots=lots.filter(l=>l.subcontractorId===sid);
+        return `<div style="margin-bottom:16px">
+          <div style="font-size:11px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:6px">
+            <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${color}"></span>
+            ${esc(sub.name)}${sub.phone?` · <span style="font-weight:400;color:#666">${esc(sub.phone)}</span>`:''}
+          </div>
+          <table style="width:100%;border-collapse:collapse;font-size:9px">
+            <thead><tr style="background:#f8f8f8">
+              <th style="border:1px solid #ddd;padding:4px 6px;text-align:left">Tâche</th>
+              <th style="border:1px solid #ddd;padding:4px 6px;text-align:left">Description</th>
+              <th style="border:1px solid #ddd;padding:4px 6px;text-align:left;white-space:nowrap">Début</th>
+              <th style="border:1px solid #ddd;padding:4px 6px;text-align:left">Durée</th>
+              <th style="border:1px solid #ddd;padding:4px 6px;text-align:left">Statut</th>
+              <th style="border:1px solid #ddd;padding:4px 6px;text-align:left;color:#EF4444">Vigilance</th>
+            </tr></thead>
+            <tbody>${subLots.map(lot=>{
+              const sd=lot.startDay??((lot.startWeek??0)*7);
+              const dur=lot.durationDays??((lot.durationWeeks??1)*6);
+              const sc=STATUS_CONFIG[lot.status||'todo'];
+              return `<tr>
+                <td style="border:1px solid #e5e5e5;padding:3px 6px;font-weight:600">${esc(lot.name)}</td>
+                <td style="border:1px solid #e5e5e5;padding:3px 6px">${esc(lot.description||'')}</td>
+                <td style="border:1px solid #e5e5e5;padding:3px 6px;white-space:nowrap">${fmtShort(addDays(project.startDate,sd))}</td>
+                <td style="border:1px solid #e5e5e5;padding:3px 6px">${dur}j</td>
+                <td style="border:1px solid #e5e5e5;padding:3px 6px">${sc.dot} ${sc.label}${lot.progress?' · '+lot.progress+'%':''}</td>
+                <td style="border:1px solid #e5e5e5;padding:3px 6px;color:#EF4444">${lot.vigilance?'⚠ '+esc(lot.vigilance):''}</td>
+              </tr>`;}).join('')}
+            </tbody>
+          </table>
+        </div>`;}).join('')}
+    </div>`;
+  }
+
+  const win=window.open('','_blank');if(!win)return;
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Planning ${esc(project.name)}</title>
+  <style>*{box-sizing:border-box;}body{font-family:-apple-system,sans-serif;margin:0;padding:10mm;}@page{size:A3 landscape;margin:8mm;}tr{page-break-inside:avoid;}</style>
+  </head><body>${pagesHtml}${recapHtml}</body></html>`);
+  win.document.close();setTimeout(()=>win.print(),800);
 }
 
 async function runAI(){
