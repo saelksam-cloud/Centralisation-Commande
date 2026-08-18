@@ -967,9 +967,23 @@ function exportPDF(project){
 
   const win=window.open('','_blank');if(!win)return;
   win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Planning ${esc(project.name)}</title>
-  <style>*{box-sizing:border-box;}body{font-family:-apple-system,sans-serif;margin:0;padding:10mm;}@page{size:A3 landscape;margin:8mm;}tr{page-break-inside:avoid;}</style>
-  </head><body>${pagesHtml}${recapHtml}</body></html>`);
-  win.document.close();setTimeout(()=>win.print(),800);
+  <style>
+    *{box-sizing:border-box;}
+    body{font-family:-apple-system,sans-serif;margin:0;padding:10mm;}
+    @page{size:A3 landscape;margin:8mm;}
+    tr{page-break-inside:avoid;}
+    #pdf-tip{background:#1C4CE8;color:#fff;padding:14px 20px;margin-bottom:16px;border-radius:8px;font-size:13px;display:flex;align-items:center;gap:16px;}
+    #pdf-tip strong{font-size:15px;display:block;margin-bottom:2px;}
+    #pdf-tip button{background:#fff;color:#1C4CE8;border:none;border-radius:6px;padding:8px 16px;font-weight:700;cursor:pointer;font-size:13px;white-space:nowrap;}
+    @media print{#pdf-tip{display:none!important;}}
+  </style>
+  </head><body>
+  <div id="pdf-tip">
+    <div style="flex:1"><strong>💾 Télécharger en PDF</strong>Dans la fenêtre qui va s'ouvrir, choisissez <b>« Enregistrer en PDF »</b> comme imprimante (en haut ou en bas de la liste), puis cliquez Enregistrer.</div>
+    <button onclick="window.print()">🖨 Ouvrir l'impression</button>
+  </div>
+  ${pagesHtml}${recapHtml}</body></html>`);
+  win.document.close();
 }
 
 async function runAI(){
