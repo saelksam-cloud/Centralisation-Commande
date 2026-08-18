@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Planning Chantier</title>
+<style>
+:root {
+  --bg: #F7F6F3; --surface: #FFFFFF; --surface-2: #F0EFEB;
+  --border: #E5E3DC; --text-1: #1A1916; --text-2: #4A4845; --text-3: #9E9C98;
+  --accent: #2563EB; --accent-light: #EEF2FD;
+  --radius: 10px; --radius-sm: 6px; --shadow: 0 1px 4px rgba(0,0,0,0.08),0 4px 16px rgba(0,0,0,0.06);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text-1);min-height:100vh;}
+a{color:var(--accent);}
+button{cursor:pointer;font-family:inherit;border:none;background:none;}
+.app-shell{max-width:1400px;margin:0 auto;padding:0 16px 80px;}
+.topbar{display:flex;align-items:center;gap:12px;padding:16px 0 12px;border-bottom:1px solid var(--border);margin-bottom:20px;flex-wrap:wrap;}
+.topbar-title{font-size:1.1rem;font-weight:700;color:var(--text-1);flex:1;min-width:0;}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--radius-sm);font-size:0.875rem;font-weight:500;transition:opacity .15s;}
+.btn:hover{opacity:.85;}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-secondary{background:var(--surface-2);color:var(--text-1);border:1px solid var(--border);}
+.btn-danger{background:#FEE2E2;color:#B91C1C;}
+.btn-ghost{color:var(--text-2);font-size:0.8rem;padding:4px 8px;border-radius:var(--radius-sm);}
+.btn-ghost:hover{background:var(--surface-2);}
+.card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow);margin-bottom:16px;}
+.card-header{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--border);}
+.card-title{font-size:1rem;font-weight:600;flex:1;}
+.card-body{padding:16px;}
+.form-group{display:flex;flex-direction:column;gap:4px;}
+.form-label{font-size:0.8125rem;font-weight:500;color:var(--text-2);}
+.form-input{padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text-1);font-size:0.875rem;font-family:inherit;}
+.form-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-light);}
+.form-grid{display:grid;gap:12px;}
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px;}
+.modal{background:var(--surface);border-radius:var(--radius);box-shadow:0 8px 40px rgba(0,0,0,0.2);width:100%;max-width:540px;max-height:90vh;overflow-y:auto;}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);}
+.modal-title{font-size:1rem;font-weight:600;}
+.modal-body{padding:20px;display:flex;flex-direction:column;gap:14px;}
+.modal-footer{padding:12px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
+.modal-close{width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:50%;color:var(--text-3);font-size:1.1rem;}
+.modal-close:hover{background:var(--surface-2);}
+.project-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;}
+.project-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;cursor:pointer;transition:box-shadow .15s,border-color .15s;}
+.project-card:hover{box-shadow:var(--shadow);border-color:var(--accent);}
+.project-card-name{font-size:1rem;font-weight:600;margin-bottom:4px;}
+.project-card-meta{font-size:0.8rem;color:var(--text-3);}
+.project-card-actions{display:flex;gap:6px;margin-top:12px;}
+.tabs{display:flex;gap:4px;background:var(--surface-2);border-radius:var(--radius-sm);padding:3px;margin-bottom:16px;}
+.tab{flex:1;padding:6px 12px;border-radius:4px;font-size:0.875rem;font-weight:500;color:var(--text-2);text-align:center;}
+.tab.active{background:var(--surface);color:var(--text-1);box-shadow:0 1px 3px rgba(0,0,0,0.1);}
+.lot-row{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);}
+.lot-row.drag-over{border-top:2px solid var(--accent);margin-top:-1px;}
+.lot-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:7px;}
+.lot-info{flex:1;min-width:0;}
+.lot-name{font-size:0.9375rem;font-weight:600;}
+.lot-desc{font-size:0.8rem;color:var(--text-3);margin-top:2px;}
+.lot-vigilance{font-size:0.8rem;color:#EF4444;margin-top:4px;background:#FEF2F2;border-left:3px solid #EF4444;padding:4px 8px;border-radius:0 4px 4px 0;line-height:1.4;}
+.lot-meta{flex-shrink:0;text-align:right;}
+.lot-weeks{font-size:0.8125rem;font-weight:600;color:var(--text-1);}
+.lot-start{font-size:0.75rem;color:var(--text-3);margin-top:2px;}
+.status-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:20px;font-size:0.75rem;font-weight:500;}
+.status-badge:hover{opacity:0.8;}
+.status-todo{background:#F0EFEB;color:#6E6C68;}
+.status-in_progress{background:#EEF2FD;color:#1C4CE8;}
+.status-done{background:#F0FDF4;color:#16A34A;}
+.status-delayed{background:#FFF7ED;color:#EA580C;}
+.progress-bar-wrap{height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin-top:6px;}
+.progress-bar-fill{height:100%;border-radius:2px;transition:width 0.3s;}
+.lot-edit-panel{background:var(--surface-2);border-radius:var(--radius-sm);padding:12px;margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.lot-edit-panel .form-label{font-size:0.75rem;}
+.lot-edit-panel .form-input{font-size:0.8125rem;padding:5px 8px;}
+.progress-input-row{display:flex;align-items:center;gap:8px;}
+.progress-input-row input[type=range]{flex:1;accent-color:var(--accent);}
+.progress-input-row span{font-size:0.8125rem;font-weight:600;min-width:32px;text-align:right;}
+.sub-picker{position:relative;margin-top:6px;}
+.sub-picker-btn{width:100%;text-align:left;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:0.8125rem;background:var(--surface);color:var(--text-3);}
+.sub-picker-btn.has-value{color:var(--text-1);}
+.sub-picker-list{position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);box-shadow:var(--shadow);z-index:20;max-height:200px;overflow-y:auto;}
+.sub-picker-item{display:flex;align-items:center;gap:6px;width:100%;text-align:left;padding:6px 10px;font-size:0.8125rem;color:var(--text-1);}
+.sub-picker-item:hover{background:var(--surface-2);}
+.sub-picker-item.selected{background:var(--accent-light);color:var(--accent);}
+.sub-picker-item.empty{color:var(--text-3);}
+.sub-picker-group-label{padding:4px 10px;font-size:0.7rem;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em;border-top:1px solid var(--border);}
+.sub-card{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px;}
+.sub-dot{width:14px;height:14px;border-radius:50%;flex-shrink:0;}
+.sub-name{font-weight:600;font-size:0.875rem;flex:1;}
+.sub-meta{font-size:0.75rem;color:var(--text-3);}
+.color-swatch{width:22px;height:22px;border-radius:50%;border:2px solid transparent;cursor:pointer;flex-shrink:0;}
+.color-swatch.selected{border-color:var(--text-1);}
+#sub-color-swatches{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;}
+/* ── Calendar view ── */
+.cal-wrap{overflow:auto;border:1px solid var(--border);border-radius:var(--radius);}
+.cal-table{border-collapse:collapse;width:max-content;}
+.cal-th-date{position:sticky;left:0;top:0;z-index:10;background:var(--surface);padding:8px 12px;border-bottom:2px solid var(--border);border-right:2px solid var(--border);min-width:120px;font-size:0.75rem;font-weight:600;color:var(--text-2);white-space:nowrap;}
+.cal-th-lot{position:sticky;top:0;z-index:5;background:var(--surface);padding:6px 4px;border-bottom:2px solid var(--border);border-right:1px solid var(--border);min-width:110px;max-width:150px;vertical-align:bottom;}
+.cal-td-date{position:sticky;left:0;z-index:3;padding:4px 10px;font-size:0.78rem;white-space:nowrap;border-bottom:1px solid var(--border);border-right:2px solid var(--border);min-width:120px;}
+.cal-td-date.is-sunday{background:#F3F4F6;color:var(--text-3);font-style:italic;}
+.cal-td-date.is-workday{background:var(--surface);color:var(--text-1);font-weight:500;}
+.cal-cell{border-bottom:1px solid var(--border);border-right:1px solid var(--border);padding:2px 3px;min-width:110px;}
+.cal-cell.is-sunday{background:#F3F4F6;}
+.alert{padding:10px 14px;border-radius:var(--radius-sm);font-size:0.875rem;margin-bottom:12px;}
+.alert-error{background:#FEE2E2;color:#B91C1C;border:1px solid #FECACA;}
+.alert-info{background:var(--accent-light);color:var(--accent);border:1px solid #BFDBFE;}
+.alert-success{background:#F0FDF4;color:#15803D;border:1px solid #BBF7D0;}
+.spinner{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;display:inline-block;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.upload-zone{border:2px dashed var(--border);border-radius:var(--radius);padding:32px;text-align:center;color:var(--text-3);cursor:pointer;transition:border-color .15s;position:relative;}
+.upload-zone:hover,.upload-zone.dragging{border-color:var(--accent);}
+.empty-state{text-align:center;padding:48px 20px;color:var(--text-3);}
+.empty-state h3{color:var(--text-2);margin-bottom:8px;}
+.recap-table{width:100%;border-collapse:collapse;font-size:0.8125rem;margin-bottom:20px;}
+.recap-table th{background:var(--surface-2);padding:6px 10px;text-align:left;border-bottom:2px solid var(--border);font-weight:600;}
+.recap-table td{padding:6px 10px;border-bottom:1px solid var(--border);vertical-align:top;}
+@media print{
+  .no-print,.tabs,button{display:none!important;}
+  .card{box-shadow:none;border:none;}
+  .cal-wrap{max-height:none;overflow:visible;border:none;}
+  .app-shell{max-width:none;padding:0;}
+  @page{size:A3 landscape;margin:8mm;}
+  /* Calendrier : adapte la largeur à la page */
+  .cal-table{width:100%!important;table-layout:fixed;}
+  .cal-th-lot{min-width:0!important;max-width:none!important;width:auto;padding:3px 2px;}
+  .cal-th-lot span{font-size:0.55rem!important;line-height:1.1;}
+  .cal-td-date{min-width:0!important;white-space:nowrap;font-size:0.65rem!important;padding:2px 4px;}
+  .cal-th-date{min-width:0!important;font-size:0.65rem!important;padding:4px 6px;}
+  .cal-cell{min-width:0!important;padding:1px;}
+  .cal-cell div{height:14px!important;}
+  /* Évite les coupures en milieu de ligne */
+  tr{page-break-inside:avoid;}
+  /* Récap sous-traitants */
+  .recap-table{font-size:0.7rem;}
+  .recap-table th,.recap-table td{padding:3px 5px;}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+// ─── Constants ───────────────────────────────────────────────────────────────
+const SUB_COLORS=['#EF4444','#F97316','#EAB308','#22C55E','#10B981','#14B8A6','#3B82F6','#6366F1','#8B5CF6','#EC4899','#F43F5E','#0EA5E9','#84CC16','#F59E0B','#06B6D4','#A855F7','#64748B','#78716C'];
+const TRADE_LABELS={gros_oeuvre:'Gros œuvre',charpente:'Charpente',couverture:'Couverture',menuiserie:'Menuiserie',isolation:'Isolation',platrerie:'Plâtrerie',electricite:'Électricité',plomberie:'Plomberie',carrelage:'Carrelage',peinture:'Peinture',vrd:'VRD',autre:'Autre'};
+const TRADE_COLORS={gros_oeuvre:'#78716C',charpente:'#D97706',couverture:'#0891B2',menuiserie:'#7C3AED',isolation:'#059669',platrerie:'#DB2777',electricite:'#D97706',plomberie:'#2563EB',carrelage:'#DC2626',peinture:'#16A34A',vrd:'#6D28D9',autre:'#6B7280'};
+const STATUS_CONFIG={todo:{label:'À faire',dot:'○',cls:'status-todo'},in_progress:{label:'En cours',dot:'◑',cls:'status-in_progress'},done:{label:'Validé',dot:'●',cls:'status-done'},delayed:{label:'Retardé',dot:'▲',cls:'status-delayed'}};
+const STATUS_CYCLE=['todo','in_progress','done','delayed'];
+const MONTHS=['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
+const DAYS=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+const MODELS_FALLBACK=['gemini-2.5-flash-preview-05-20','gemini-2.5-flash','gemini-1.5-flash','gemini-1.5-flash-8b','gemini-pro'];
+let _availableModels=null;
+async function getModels(){
+  if(_availableModels)return _availableModels;
+  try{
+    const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${state.apiKey}`);
+    if(r.ok){
+      const d=await r.json();
+      const list=(d.models||[]).filter(m=>m.supportedGenerationMethods?.includes('generateContent')&&m.name.toLowerCase().includes('flash')).map(m=>m.name.replace('models/',''));
+      if(list.length){_availableModels=list;return list;}
+    }
+  }catch(e){}
+  return MODELS_FALLBACK;
+}
+const MAX_RETRIES=4;
+
+// ─── State ───────────────────────────────────────────────────────────────────
+let state={view:'home',selectedProjectId:null,projects:[],subcontractors:[],apiKey:'',modal:null,modalData:{},modalStep:0,modalError:'',editingSubId:null,expandedLotId:null,activeTab:'calendar'};
+
+function loadState(){
+  try{
+    // Migration: try old key first, then new key
+    const old=localStorage.getItem('planning_state');
+    const cur=localStorage.getItem('planning_state_v2');
+    const raw=cur||old;
+    if(raw){Object.assign(state,JSON.parse(raw));}
+    // If we loaded from old key but not yet saved to new key, migrate now
+    if(old&&!cur){localStorage.setItem('planning_state_v2',old);}
+  }catch(e){}
+}
+function saveState(){try{localStorage.setItem('planning_state_v2',JSON.stringify(state));localStorage.setItem('planning_state',JSON.stringify(state));}catch(e){}}
+function setState(patch){Object.assign(state,patch);saveState();render();}
+function updateLot(projectId,lotId,changes){state.projects=state.projects.map(p=>p.id!==projectId?p:{...p,lots:p.lots.map(l=>l.id!==lotId?l:{...l,...changes})});saveState();}
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+const genId=()=>Math.random().toString(36).slice(2,10);
+const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+function addDays(date,n){const d=new Date(date);d.setDate(d.getDate()+n);return d;}
+function fmtShort(date){const d=new Date(date);return `${d.getDate()} ${MONTHS[d.getMonth()]}`;}
+function fmtFull(date){const d=new Date(date);return `${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;}
+
+// ─── Working-day calc ─────────────────────────────────────────────────────────
+function isWeekend(date){const d=new Date(date);return d.getDay()===0||d.getDay()===6;}
+function calcSegments(projectStart,startDay,workDays){
+  const base=new Date(projectStart);const segs=[];let cal=startDay;let left=workDays;
+  // Skip if start is a weekend
+  while(isWeekend(addDays(base,cal)))cal++;
+  while(left>0){const segStart=cal;let len=0;
+    while(left>0){const d=addDays(base,cal);if(isWeekend(d))break;len++;left--;cal++;}
+    if(len>0)segs.push({calStart:segStart,calLen:len});
+    while(isWeekend(addDays(base,cal)))cal++;}
+  return segs;
+}
+// Convert a calendar date string (YYYY-MM-DD) to offset days from project start
+function dateToOffset(projectStart,dateStr){
+  const ps=new Date(projectStart);const dt=new Date(dateStr);
+  const diff=Math.round((dt-ps)/(1000*60*60*24));
+  return Math.max(0,diff);
+}
+// Format date as YYYY-MM-DD for input[type=date]
+function fmtInputDate(date){const d=new Date(date);const y=d.getFullYear();const m=String(d.getMonth()+1).padStart(2,'0');const dd=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${dd}`;}
+function skipWeekend(projectStart,calDay){
+  while(isWeekend(addDays(projectStart,calDay)))calDay++;
+  return calDay;
+}
+
+// ─── Abbreviations ────────────────────────────────────────────────────────────
+function abbrevLot(name){
+  const MAP=[[/préparation/gi,'Prép'],[/protection/gi,'Protect'],[/installation/gi,'Install'],[/électrique/gi,'Élec'],[/isolation/gi,'Iso'],[/chantier/gi,'Chant'],[/menuiserie/gi,'Men'],[/carrelage/gi,'Carrel'],[/plomberie/gi,'Plomb'],[/peinture/gi,'Peint'],[/plâtrerie/gi,'Plât'],[/couverture/gi,'Couv'],[/charpente/gi,'Charp'],[/gros[\s-]?œuvre/gi,'GO'],[/électricité/gi,'Élec']];
+  const FILLERS=/\b(de|du|des|le|la|les|un|une|au|aux|en|par|sur|pour|avec|dans|l'|d')\b/gi;
+  let s=name;MAP.forEach(([re,rep])=>{s=s.replace(re,rep);});
+  return s.replace(/\bet\b/gi,'+').replace(FILLERS,' ').replace(/\s{2,}/g,' ').trim();
+}
+function abbrevSub(name){const w=name.trim().split(/\s+/);return w.length===1?w[0].toUpperCase().slice(0,10):(w[0][0].toUpperCase()+'.'+w.slice(1).join('').toUpperCase()).slice(0,12);}
+
+// ─── Gemini ───────────────────────────────────────────────────────────────────
+async function callGeminiWithModel(prompt,model){
+  const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${state.apiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.2,maxOutputTokens:8192}})});
+  if(!r.ok){const e=await r.json().catch(()=>({}));const msg=e.error?.message||`Erreur (${r.status})`;const isOv=r.status===503||msg.toLowerCase().includes('overload');const isQ=r.status===429||msg.toLowerCase().includes('quota');const isNF=r.status===404||msg.toLowerCase().includes('not found')||msg.toLowerCase().includes('not supported');const m=msg.match(/retry in ([\d.]+)s/i);throw Object.assign(new Error(msg),{isOverload:isOv,isQuota:isQ,isNotFound:isNF,retryAfter:m?Math.ceil(parseFloat(m[1])):null});}
+  return r.json();
+}
+async function callGeminiRetry(prompt){
+  const models=await getModels();
+  let lastErr=null;
+  for(let i=0;i<models.length;i++){
+    try{return await callGeminiWithModel(prompt,models[i]);}
+    catch(e){
+      lastErr=e;
+      if(e.isNotFound||e.isQuota){continue;}// try next model
+      if(e.isOverload){await new Promise(r=>setTimeout(r,e.retryAfter?e.retryAfter*1000:3000));continue;}
+      throw e;// permanent error
+    }
+  }
+  throw lastErr||new Error('Aucun modèle disponible');
+}
+
+// ─── PDF extraction ───────────────────────────────────────────────────────────
+async function extractPDF(file){
+  if(!window.pdfjsLib){
+    await new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';s.onload=res;s.onerror=rej;document.head.appendChild(s);});
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  }
+  const pdf=await window.pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;
+  let text='';
+  for(let i=1;i<=pdf.numPages;i++){const p=await pdf.getPage(i);const c=await p.getTextContent();const lines={};c.items.forEach(it=>{const y=Math.round(it.transform[5]);(lines[y]=lines[y]||[]).push(it.str);});text+=Object.keys(lines).sort((a,b)=>b-a).map(y=>lines[y].join(' ')).join('\n')+'\n';}
+  return text;
+}
+
+// ─── Render ───────────────────────────────────────────────────────────────────
+function render(){document.getElementById('app').innerHTML=renderApp();attachEvents();}
+
+function renderApp(){
+  const mod=state.modal?renderModal():'';
+  if(state.view==='home')return mod+renderHome();
+  if(state.view==='project')return mod+renderProject();
+  if(state.view==='subs')return mod+renderSubs();
+  return mod+renderHome();
+}
+
+// ─── Home ─────────────────────────────────────────────────────────────────────
+function renderHome(){
+  return `<div class="app-shell">
+  <div class="topbar">
+    <div class="topbar-title">🏗 Planning Chantier</div>
+    <button class="btn btn-secondary" data-action="open-settings">⚙ Paramètres</button>
+    <button class="btn btn-secondary" data-action="go-subs">👷 Sous-traitants</button>
+    <button class="btn btn-secondary no-print" data-action="export-data" title="Exporter toutes les données">⬇ Exporter</button>
+    <label class="btn btn-secondary no-print" style="cursor:pointer;margin:0" title="Importer des données depuis un export">⬆ Importer<input type="file" accept=".json" id="import-file-input" style="display:none"></label>
+    <button class="btn btn-primary" data-action="new-project">+ Nouveau projet</button>
+  </div>
+  ${state.projects.length===0?`<div class="empty-state"><h3>Aucun projet</h3><p>Créez votre premier projet pour commencer.</p><br><button class="btn btn-primary" data-action="new-project">+ Créer un projet</button></div>`:`
+  <div class="project-grid">${state.projects.map(p=>{
+    const lots=p.lots||[];const done=lots.filter(l=>l.status==='done').length;
+    return `<div class="project-card" data-open-project="${esc(p.id)}">
+      <div class="project-card-name">${esc(p.name)}</div>
+      <div class="project-card-meta">Début: ${fmtShort(p.startDate)} · ${lots.length} lot${lots.length>1?'s':''} · ${done}/${lots.length} validés</div>
+      <div class="project-card-actions">
+        <button class="btn btn-secondary" style="font-size:0.8rem;padding:4px 10px" data-open-project="${esc(p.id)}">Ouvrir</button>
+        <button class="btn btn-danger" style="font-size:0.8rem;padding:4px 10px" data-delete-project="${esc(p.id)}">Supprimer</button>
+      </div></div>`;}).join('')}
+  </div>`}
+</div>`;
+}
+
+// ─── Project ──────────────────────────────────────────────────────────────────
+function renderProject(){
+  const project=state.projects.find(p=>p.id===state.selectedProjectId);
+  if(!project)return renderHome();
+  const lots=project.lots||[];
+  const done=lots.filter(l=>l.status==='done').length;
+  const inProg=lots.filter(l=>l.status==='in_progress').length;
+  const delayed=lots.filter(l=>l.status==='delayed').length;
+  const avgPct=lots.length?Math.round(lots.reduce((s,l)=>s+(l.progress||0),0)/lots.length):0;
+
+  return `<div class="app-shell">
+  <div class="topbar">
+    <button class="btn btn-ghost" data-action="go-home">← Projets</button>
+    <div class="topbar-title">${esc(project.name)}</div>
+    <span style="font-size:0.8rem;color:var(--text-3)">Début: ${fmtFull(project.startDate)}</span>
+    <button class="btn btn-secondary no-print" data-action="sort-lots" title="Trier les lots par date de début">↕ Trier</button>
+    <button class="btn btn-secondary no-print" data-action="add-lot">+ Lot</button>
+    <button class="btn btn-secondary no-print" data-action="import-ai">🤖 Importer devis</button>
+    <button class="btn btn-secondary no-print" data-action="export-pdf">📄 PDF</button>
+  </div>
+  <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px">
+    ${[['Lots',lots.length,''],['En cours',inProg,'#1C4CE8'],['Validés',done,'#16A34A'],['Retardés',delayed,'#EA580C'],['Avancement',avgPct+'%',avgPct>=80?'#16A34A':avgPct>=40?'#1C4CE8':'#6B7280']].map(([l,v,c])=>`
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 16px;flex:1;min-width:90px">
+      <div style="font-size:1.25rem;font-weight:700;color:${c||'var(--text-1)'};">${v}</div>
+      <div style="font-size:0.75rem;color:var(--text-3)">${l}</div>
+    </div>`).join('')}
+  </div>
+  <div class="tabs no-print">
+    <button class="tab ${state.activeTab==='calendar'?'active':''}" data-tab="calendar">📅 Calendrier</button>
+    <button class="tab ${state.activeTab==='lots'?'active':''}" data-tab="lots">📋 Tâches</button>
+  </div>
+  ${state.activeTab==='calendar'?renderCalendar(project):renderLots(project)}
+</div>`;
+}
+
+// ─── Calendar view (transposed) ───────────────────────────────────────────────
+function renderCalendar(project){
+  const lots=project.lots||[];
+  if(!lots.length)return `<div class="card"><div class="card-body"><div class="empty-state"><p>Aucun lot. Importez un devis ou ajoutez des lots.</p></div></div></div>`;
+
+  const startDate=new Date(project.startDate);
+
+  // Precompute each lot's active days
+  const data=lots.map(lot=>{
+    const startDay=lot.startDay??((lot.startWeek??0)*7);
+    const dur=lot.durationDays??((lot.durationWeeks??1)*6);
+    const segs=calcSegments(startDate,startDay,dur);
+    const active=new Set();let mn=Infinity,mx=-Infinity;
+    segs.forEach(seg=>{for(let d=seg.calStart;d<seg.calStart+seg.calLen;d++){active.add(d);if(d<mn)mn=d;if(d>mx)mx=d;}});
+    const sub=state.subcontractors.find(s=>s.id===lot.subcontractorId);
+    const color=sub?.color||TRADE_COLORS[lot.category]||'#6B7280';
+    return{lot,active,mn,mx,sub,color};
+  });
+
+  const totalDays=Math.max(...data.map(d=>isFinite(d.mx)?d.mx:0),14)+1;
+
+  // Header columns
+  const headers=data.map(({lot,sub,color})=>{
+    const sc=STATUS_CONFIG[lot.status||'todo'];
+    return `<th class="cal-th-lot">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center">
+        <span style="width:10px;height:10px;border-radius:50%;background:${color};display:inline-block"></span>
+        <span style="font-size:0.68rem;font-weight:600;color:var(--text-1);word-break:break-word;line-height:1.2">${esc(abbrevLot(lot.name))}</span>
+        ${sub?`<span style="font-size:0.6rem;color:var(--text-3)">${esc(abbrevSub(sub.name))}</span>`:''}
+        <span class="status-badge ${sc.cls}" style="font-size:0.58rem;padding:1px 5px">${sc.dot} ${sc.label}</span>
+        ${lot.vigilance?`<span style="font-size:0.65rem;color:#EF4444" title="${esc(lot.vigilance)}">⚠ vigilance</span>`:''}
+      </div>
+    </th>`;
+  }).join('');
+
+  // Rows
+  let rows='';
+  for(let day=0;day<totalDays;day++){
+    const d=addDays(startDate,day);
+    const dow=d.getDay();const isWE=dow===0||dow===6;
+    const label=`${DAYS[dow]} ${d.getDate()} ${MONTHS[d.getMonth()]}`;
+    const dateCls=isWE?'cal-td-date is-sunday':'cal-td-date is-workday';
+
+    const cells=data.map(({lot,active,mn,mx,color})=>{
+      const cls=isWE?'cal-cell is-sunday':'cal-cell';
+      if(!isWE&&active.has(day)){
+        const isFirst=day===mn,isLast=day===mx;
+        const r=isFirst&&isLast?'3px':isFirst?'3px 0 0 3px':isLast?'0 3px 3px 0':'0';
+        const pct=lot.progress||0;
+        return `<td class="${cls}"><div style="height:22px;background:${color};border-radius:${r};opacity:0.88;position:relative;overflow:hidden">${pct>0?`<div style="position:absolute;left:0;top:0;height:100%;width:${pct}%;background:rgba(0,0,0,0.18)"></div>`:''}</div></td>`;
+      }
+      return `<td class="${cls}"></td>`;
+    }).join('');
+    rows+=`<tr><td class="${dateCls}">${label}</td>${cells}</tr>`;
+  }
+
+  return `<div class="card"><div class="card-body" style="padding:10px">
+    <div class="cal-wrap" style="max-height:68vh">
+      <table class="cal-table">
+        <thead><tr><th class="cal-th-date">Date</th>${headers}</tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  </div></div>
+  ${renderRecap(project)}`;
+}
+
+// ─── Lots tab ─────────────────────────────────────────────────────────────────
+function renderLots(project){
+  const lots=project.lots||[];
+  if(!lots.length)return `<div class="card"><div class="card-body"><div class="empty-state"><p>Aucun lot.</p></div></div></div>`;
+  return `<div class="card"><div class="card-header"><span class="card-title">Tâches (${lots.length})</span></div>
+  <div class="card-body" style="padding:0 16px">${lots.map(lot=>renderLotRow(lot,project.id,project.startDate)).join('')}</div></div>`;
+}
+
+function renderLotRow(lot,projectId,projectStart){
+  const sub=state.subcontractors.find(s=>s.id===lot.subcontractorId);
+  const color=sub?.color||TRADE_COLORS[lot.category]||'#6B7280';
+  const status=lot.status||'todo';const progress=lot.progress??0;
+  const sc=STATUS_CONFIG[status];
+  const pc=status==='done'?'#16A34A':status==='delayed'?'#EA580C':status==='in_progress'?'#1C4CE8':'#9E9C98';
+  const isExp=state.expandedLotId===lot.id;
+  const startDay=lot.startDay??((lot.startWeek??0)*7);
+  const dur=lot.durationDays??((lot.durationWeeks??1)*6);
+  const startDate=addDays(projectStart,startDay);
+  const allSubs=state.subcontractors;
+  const catSubs=allSubs.filter(s=>s.category===lot.category);
+
+  return `<div class="lot-row" draggable="true" data-drag-lot="${esc(lot.id)}" data-project-id="${esc(projectId)}" style="flex-direction:column;align-items:stretch;padding:10px 0;transition:opacity .15s">
+  <div style="display:flex;align-items:flex-start;gap:10px">
+    <div style="cursor:grab;color:var(--text-3);font-size:1.1rem;padding-top:4px;user-select:none" title="Glisser pour réordonner">⠿</div>
+    <div class="lot-dot" style="background:${color};margin-top:7px"></div>
+    <div class="lot-info" style="flex:1;min-width:0">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <span class="lot-name">${esc(lot.name)}</span>
+        <button class="status-badge ${sc.cls}" data-cycle-status="${esc(lot.id)}" data-project-id="${esc(projectId)}" title="Cliquer pour changer">${sc.dot} ${sc.label}</button>
+      </div>
+      ${lot.description?`<div class="lot-desc">${esc(lot.description)}</div>`:''}
+      ${lot.vigilance?`<div class="lot-vigilance">⚠ ${esc(lot.vigilance)}</div>`:''}
+      <div class="sub-picker" data-picker-lot="${esc(lot.id)}" data-picker-project="${esc(projectId)}">
+        <button type="button" class="sub-picker-btn ${sub?'has-value':''}" data-picker-toggle>${sub?esc(sub.name):'— Choisir un sous-traitant —'}</button>
+        <div class="sub-picker-list" hidden>
+          <button type="button" class="sub-picker-item empty" data-picker-value="">Aucun</button>
+          ${catSubs.length?`<div class="sub-picker-group-label">${TRADE_LABELS[lot.category]||lot.category}</div>${catSubs.map(s=>`<button type="button" class="sub-picker-item ${lot.subcontractorId===s.id?'selected':''}" data-picker-value="${esc(s.id)}"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${s.color||'#6B7280'};margin-right:5px"></span>${esc(s.name)}</button>`).join('')}`:''}
+          ${allSubs.filter(s=>s.category!==lot.category).length?`<div class="sub-picker-group-label">Autres</div>${allSubs.filter(s=>s.category!==lot.category).map(s=>`<button type="button" class="sub-picker-item ${lot.subcontractorId===s.id?'selected':''}" data-picker-value="${esc(s.id)}"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${s.color||'#6B7280'};margin-right:5px"></span>${esc(s.name)} <span style="color:var(--text-3);font-size:0.75rem">(${TRADE_LABELS[s.category]||s.category})</span></button>`).join('')}`:''}
+        </div>
+      </div>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${progress}%;background:${pc}"></div></div>
+    </div>
+    <div class="lot-meta" style="flex-shrink:0;text-align:right">
+      <div class="lot-weeks">${progress}%</div>
+      <div class="lot-start">${dur}j · ${fmtShort(startDate)}</div>
+      <button class="btn-ghost" style="font-size:0.75rem;margin-top:4px" data-expand-lot="${esc(lot.id)}">${isExp?'▲ Fermer':'▼ Modifier'}</button>
+    </div>
+  </div>
+  ${isExp?`<div class="lot-edit-panel">
+    <div class="form-group"><label class="form-label">Statut</label>
+      <select class="form-input" data-lot-field="status" data-lot-id="${esc(lot.id)}" data-project-id="${esc(projectId)}">
+        ${Object.entries(STATUS_CONFIG).map(([k,v])=>`<option value="${k}" ${status===k?'selected':''}>${v.dot} ${v.label}</option>`).join('')}
+      </select></div>
+    <div class="form-group"><label class="form-label">Avancement</label>
+      <div class="progress-input-row">
+        <input type="range" min="0" max="100" value="${progress}" data-lot-field="progress" data-lot-id="${esc(lot.id)}" data-project-id="${esc(projectId)}">
+        <span id="pct-${esc(lot.id)}">${progress}%</span>
+      </div></div>
+    <div class="form-group"><label class="form-label">Date de début</label>
+      <input type="date" class="form-input" value="${fmtInputDate(startDate)}" data-lot-field="startDay" data-lot-id="${esc(lot.id)}" data-project-id="${esc(projectId)}" data-project-start="${esc(projectStart)}"></div>
+    <div class="form-group"><label class="form-label">Durée (jours ouvrés)</label>
+      <input type="number" class="form-input" min="1" value="${dur}" data-lot-field="durationDays" data-lot-id="${esc(lot.id)}" data-project-id="${esc(projectId)}"></div>
+    <div class="form-group" style="grid-column:1/-1"><label class="form-label">Description</label>
+      <textarea class="form-input" rows="2" data-lot-field="description" data-lot-id="${esc(lot.id)}" data-project-id="${esc(projectId)}" style="resize:vertical">${esc(lot.description||'')}</textarea></div>
+    <div class="form-group" style="grid-column:1/-1">
+      <label class="form-label" style="display:flex;align-items:center;gap:6px"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#EF4444"></span>Point de vigilance</label>
+      <textarea class="form-input" rows="2" placeholder="Ex: Accès difficile, prévoir protection sol…" data-lot-field="vigilance" data-lot-id="${esc(lot.id)}" data-project-id="${esc(projectId)}" style="resize:vertical">${esc(lot.vigilance||'')}</textarea></div>
+    <div style="grid-column:1/-1;display:flex;justify-content:flex-end">
+      <button class="btn btn-danger" style="font-size:0.8rem" data-delete-lot="${esc(lot.id)}" data-project-id="${esc(projectId)}">Supprimer ce lot</button>
+    </div>
+  </div>`:''}
+</div>`;
+}
+
+// ─── Recap section ────────────────────────────────────────────────────────────
+function renderRecap(project){
+  const lots=project.lots||[];
+  const subIds=[...new Set(lots.map(l=>l.subcontractorId).filter(Boolean))];
+  if(!subIds.length)return'';
+  return `<div style="margin-top:24px">
+  <h2 style="font-size:1rem;font-weight:700;margin-bottom:16px;padding-top:8px;border-top:2px solid var(--border)">Récapitulatif par sous-traitant</h2>
+  ${subIds.map(sid=>{
+    const sub=state.subcontractors.find(s=>s.id===sid);if(!sub)return'';
+    const subLots=lots.filter(l=>l.subcontractorId===sid);
+    const color=sub.color||'#6B7280';
+    return `<div style="margin-bottom:20px">
+      <div style="font-size:1rem;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:8px">
+        <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${color}"></span>
+        ${esc(sub.name)}${sub.phone?` · <span style="font-size:0.85rem;color:var(--text-3)">${esc(sub.phone)}</span>`:''}
+      </div>
+      <table class="recap-table">
+        <thead><tr><th>Tâche</th><th>Description</th><th>Début</th><th>Durée</th><th>Statut</th><th>Vigilance</th></tr></thead>
+        <tbody>${subLots.map(lot=>{
+          const sd=lot.startDay??((lot.startWeek??0)*7);
+          const dur=lot.durationDays??((lot.durationWeeks??1)*6);
+          const sc=STATUS_CONFIG[lot.status||'todo'];
+          return `<tr>
+            <td style="font-weight:600">${esc(lot.name)}</td>
+            <td>${esc(lot.description||'')}</td>
+            <td style="white-space:nowrap">${fmtShort(addDays(project.startDate,sd))}</td>
+            <td>${dur}j</td>
+            <td>${sc.dot} ${sc.label}${lot.progress?' · '+lot.progress+'%':''}</td>
+            <td style="color:#EF4444">${lot.vigilance?'⚠ '+esc(lot.vigilance):''}</td>
+          </tr>`;}).join('')}
+        </tbody>
+      </table>
+    </div>`;}).join('')}
+</div>`;
+}
+
+// ─── Subs page ────────────────────────────────────────────────────────────────
+function renderSubs(){
+  return `<div class="app-shell">
+  <div class="topbar">
+    <button class="btn btn-ghost" data-action="go-home">← Accueil</button>
+    <div class="topbar-title">👷 Sous-traitants</div>
+    <button class="btn btn-primary" data-action="add-sub">+ Ajouter</button>
+  </div>
+  <div class="card"><div class="card-body">
+    ${state.subcontractors.length===0?`<div class="empty-state"><p>Aucun sous-traitant.</p></div>`:''}
+    ${state.subcontractors.map(sub=>{
+      const isEd=state.editingSubId===sub.id;
+      return `<div class="sub-card" style="flex-direction:column;align-items:stretch">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="sub-dot" style="background:${sub.color||'#6B7280'}"></div>
+          <div style="flex:1"><div class="sub-name">${esc(sub.name)}</div><div class="sub-meta">${TRADE_LABELS[sub.category]||sub.category}${sub.phone?' · '+esc(sub.phone):''}</div></div>
+          <button class="btn-ghost" data-edit-sub="${esc(sub.id)}">${isEd?'▲ Fermer':'▼ Modifier'}</button>
+          <button class="btn btn-danger" style="font-size:0.75rem;padding:3px 8px" data-delete-sub="${esc(sub.id)}">✕</button>
+        </div>
+        ${isEd?renderSubForm(sub):''}
+      </div>`;}).join('')}
+  </div></div></div>`;
+}
+
+function renderSubForm(sub){
+  const selColor=sub.color||SUB_COLORS[0];
+  return `<div style="padding:12px;background:var(--surface-2);border-radius:var(--radius-sm);margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:10px">
+    <div class="form-group"><label class="form-label">Nom</label><input type="text" class="form-input" id="sub-edit-name" value="${esc(sub.name)}"></div>
+    <div class="form-group"><label class="form-label">Téléphone</label><input type="tel" class="form-input" id="sub-edit-phone" value="${esc(sub.phone||'')}"></div>
+    <div class="form-group"><label class="form-label">Corps de métier</label>
+      <select class="form-input" id="sub-edit-category">${Object.entries(TRADE_LABELS).map(([k,v])=>`<option value="${k}" ${sub.category===k?'selected':''}>${v}</option>`).join('')}</select></div>
+    <div class="form-group"><label class="form-label">Couleur</label>
+      <div id="sub-color-swatches">${SUB_COLORS.map(c=>`<button class="color-swatch ${c===selColor?'selected':''}" data-color="${c}" style="background:${c}"></button>`).join('')}</div>
+      <input type="hidden" id="sub-edit-color" value="${esc(selColor)}">
+    </div>
+    <div style="grid-column:1/-1;display:flex;justify-content:flex-end">
+      <button class="btn btn-primary" data-save-sub="${esc(sub.id)}">Enregistrer</button>
+    </div>
+  </div>`;
+}
+
+// ─── Modal ────────────────────────────────────────────────────────────────────
+function renderModal(){
+  const{modal,modalData,modalStep,modalError}=state;let c='';
+
+  if(modal==='new-project'){c=`
+    <div class="modal-header"><span class="modal-title">Nouveau projet</span><button class="modal-close" data-close-modal>✕</button></div>
+    <div class="modal-body">
+      ${modalError?`<div class="alert alert-error">${esc(modalError)}</div>`:''}
+      <div class="form-group"><label class="form-label">Nom du projet</label><input type="text" class="form-input" id="m-proj-name" value="${esc(modalData.name||'')}" placeholder="Ex: Rénovation Paris 15e"></div>
+      <div class="form-group"><label class="form-label">Date de début</label><input type="date" class="form-input" id="m-proj-start" value="${modalData.startDate||new Date().toISOString().split('T')[0]}"></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-secondary" data-close-modal>Annuler</button><button class="btn btn-primary" data-action="create-project">Créer</button></div>`;}
+
+  if(modal==='add-lot'){c=`
+    <div class="modal-header"><span class="modal-title">Ajouter un lot</span><button class="modal-close" data-close-modal>✕</button></div>
+    <div class="modal-body">
+      ${modalError?`<div class="alert alert-error">${esc(modalError)}</div>`:''}
+      <div class="form-group"><label class="form-label">Nom du lot</label><input type="text" class="form-input" id="m-lot-name" value="${esc(modalData.name||'')}" placeholder="Ex: Gros œuvre - Fondations"></div>
+      <div class="form-group"><label class="form-label">Catégorie</label>
+        <select class="form-input" id="m-lot-cat">${Object.entries(TRADE_LABELS).map(([k,v])=>`<option value="${k}" ${(modalData.category||'gros_oeuvre')===k?'selected':''}>${v}</option>`).join('')}</select></div>
+      <div class="form-grid" style="grid-template-columns:1fr 1fr">
+        <div class="form-group"><label class="form-label">Date de début</label><input type="date" class="form-input" id="m-lot-start" value="${(()=>{const proj=state.projects.find(p=>p.id===state.selectedProjectId);return fmtInputDate(addDays(proj?.startDate||new Date(),modalData.startDay||0));})()}"></div>
+        <div class="form-group"><label class="form-label">Durée (jours ouvrés)</label><input type="number" class="form-input" id="m-lot-dur" min="1" value="${modalData.durationDays||5}"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Description</label><textarea class="form-input" id="m-lot-desc" rows="2" style="resize:vertical">${esc(modalData.description||'')}</textarea></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-secondary" data-close-modal>Annuler</button><button class="btn btn-primary" data-action="save-lot">Ajouter</button></div>`;}
+
+  if(modal==='add-sub'){
+    const selColor=modalData.color||SUB_COLORS[state.subcontractors.length%SUB_COLORS.length];
+    c=`<div class="modal-header"><span class="modal-title">Nouveau sous-traitant</span><button class="modal-close" data-close-modal>✕</button></div>
+    <div class="modal-body">
+      ${modalError?`<div class="alert alert-error">${esc(modalError)}</div>`:''}
+      <div class="form-group"><label class="form-label">Nom</label><input type="text" class="form-input" id="m-sub-name" value="${esc(modalData.name||'')}" placeholder="Ex: MODERNEISO"></div>
+      <div class="form-group"><label class="form-label">Téléphone</label><input type="tel" class="form-input" id="m-sub-phone" value="${esc(modalData.phone||'')}"></div>
+      <div class="form-group"><label class="form-label">Corps de métier</label>
+        <select class="form-input" id="m-sub-cat">${Object.entries(TRADE_LABELS).map(([k,v])=>`<option value="${k}" ${(modalData.category||'isolation')===k?'selected':''}>${v}</option>`).join('')}</select></div>
+      <div class="form-group"><label class="form-label">Couleur</label>
+        <div id="sub-color-swatches">${SUB_COLORS.map(c=>`<button class="color-swatch ${c===selColor?'selected':''}" data-color="${c}" style="background:${c}"></button>`).join('')}</div>
+        <input type="hidden" id="m-sub-color" value="${esc(selColor)}">
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-secondary" data-close-modal>Annuler</button><button class="btn btn-primary" data-action="save-sub">Ajouter</button></div>`;}
+
+  if(modal==='settings'){c=`
+    <div class="modal-header"><span class="modal-title">⚙ Paramètres</span><button class="modal-close" data-close-modal>✕</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Clé API Gemini</label>
+        <input type="password" class="form-input" id="m-api-key" value="${esc(state.apiKey)}" placeholder="AIza… ou AQu…">
+        <div style="font-size:0.75rem;color:var(--text-3);margin-top:4px">Obtenez votre clé sur <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a></div>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-secondary" data-close-modal>Annuler</button><button class="btn btn-primary" data-action="save-settings">Enregistrer</button></div>`;}
+
+  if(modal==='import-ai'){
+    const isLoading=modalStep===1;
+    c=`<div class="modal-header"><span class="modal-title">🤖 Importer via IA</span><button class="modal-close" ${isLoading?'disabled':''} data-close-modal>✕</button></div>
+    <div class="modal-body">
+      ${modalError?`<div class="alert alert-error">${esc(modalError)}</div>`:''}
+      ${isLoading?`<div style="text-align:center;padding:24px"><div class="spinner" style="margin:0 auto 12px"></div><p style="color:var(--text-2)">Analyse en cours…</p><p style="font-size:0.8rem;color:var(--text-3);margin-top:4px">Cela peut prendre 30–60 secondes</p></div>`:`
+      <div class="alert alert-info">L'IA analysera votre devis et générera le planning automatiquement.</div>
+      <div class="upload-zone" id="upload-zone">
+        <input type="file" id="file-input" accept=".pdf,.txt" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%">
+        <div style="font-size:2rem;margin-bottom:8px">📄</div>
+        <div style="font-weight:600;margin-bottom:4px">Déposez votre devis ici</div>
+        <div style="font-size:0.8rem">PDF ou TXT · cliquez pour parcourir</div>
+        ${modalData.fileName?`<div style="margin-top:8px;font-size:0.8rem;color:var(--accent)">✓ ${esc(modalData.fileName)}</div>`:''}
+      </div>
+      ${!state.apiKey?`<div class="alert alert-error">⚠ Clé API Gemini non configurée. Allez dans ⚙ Paramètres.</div>`:''}`}
+    </div>
+    ${!isLoading?`<div class="modal-footer"><button class="btn btn-secondary" data-close-modal>Annuler</button><button class="btn btn-primary" data-action="run-ai" ${!state.apiKey||!modalData.fileData?'disabled':''}>Analyser</button></div>`:''}`;}
+
+  return `<div class="modal-backdrop" id="modal-backdrop"><div class="modal">${c}</div></div>`;
+}
+
+// ─── Events ───────────────────────────────────────────────────────────────────
+function attachEvents(){
+  document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>setState({activeTab:b.dataset.tab})));
+  document.querySelectorAll('[data-action]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();handleAction(b.dataset.action);}));
+
+  // Import file input — must be wired here, not inside handleAction
+  const importInput=document.getElementById('import-file-input');
+  if(importInput){
+    importInput.addEventListener('change',e=>{
+      const file=e.target.files?.[0];if(!file)return;
+      const reader=new FileReader();
+      reader.onload=ev=>{
+        try{
+          const imported=JSON.parse(ev.target.result);
+          if(!imported.projects)throw new Error('Fichier invalide');
+          if(!confirm(`Importer ${imported.projects?.length||0} projet(s) et ${imported.subcontractors?.length||0} sous-traitant(s) ?\n\nCela remplacera toutes vos données actuelles.`))return;
+          Object.assign(state,imported);
+          saveState();render();
+        }catch(err){alert('Erreur lors de l\'import : '+err.message);}
+      };
+      reader.readAsText(file);
+    });
+  }
+
+  document.querySelectorAll('[data-open-project]').forEach(el=>el.addEventListener('click',e=>{if(e.target.closest('[data-delete-project]'))return;setState({view:'project',selectedProjectId:el.dataset.openProject});}));
+  document.querySelectorAll('[data-delete-project]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();if(!confirm('Supprimer ce projet ?'))return;state.projects=state.projects.filter(p=>p.id!==b.dataset.deleteProject);saveState();render();}));
+
+  const bd=document.getElementById('modal-backdrop');
+  if(bd)bd.addEventListener('click',e=>{if(e.target===bd)setState({modal:null,modalError:'',modalStep:0,modalData:{}});});
+  document.querySelectorAll('[data-close-modal]').forEach(b=>b.addEventListener('click',()=>setState({modal:null,modalError:'',modalStep:0,modalData:{}})));
+
+  document.querySelectorAll('[data-cycle-status]').forEach(b=>b.addEventListener('click',e=>{
+    e.stopPropagation();
+    const lot=state.projects.find(p=>p.id===b.dataset.projectId)?.lots.find(l=>l.id===b.dataset.cycleStatus);
+    if(!lot)return;
+    const next=STATUS_CYCLE[(STATUS_CYCLE.indexOf(lot.status||'todo')+1)%STATUS_CYCLE.length];
+    const ch={status:next};if(next==='done')ch.progress=100;if(next==='todo')ch.progress=0;
+    updateLot(b.dataset.projectId,b.dataset.cycleStatus,ch);render();
+  }));
+
+  document.querySelectorAll('[data-expand-lot]').forEach(b=>b.addEventListener('click',()=>setState({expandedLotId:state.expandedLotId===b.dataset.expandLot?null:b.dataset.expandLot})));
+
+  document.querySelectorAll('[data-lot-field]').forEach(input=>{
+    const{lotField:field,lotId,projectId}=input.dataset;
+    if(field==='progress'){
+      input.addEventListener('input',()=>{const el=document.getElementById(`pct-${lotId}`);if(el)el.textContent=input.value+'%';});
+      input.addEventListener('change',()=>{updateLot(projectId,lotId,{progress:parseInt(input.value)});render();});
+    }else{
+      const save=()=>{
+        const v=input.value;
+        let ch;
+        if(field==='startDay'){
+          // input is a date picker — convert to offset days from project start
+          const ps=input.dataset.projectStart;
+          const offset=dateToOffset(ps,v);
+          const adjusted=skipWeekend(ps,offset);
+          ch={startDay:adjusted};
+        } else {
+          ch={[field]:field==='durationDays'?parseInt(v):v};
+        }
+        if(field==='status'&&v==='done')ch.progress=100;
+        if(field==='status'&&v==='todo')ch.progress=0;
+        updateLot(projectId,lotId,ch);
+      };
+      input.addEventListener('change',()=>{save();render();});
+      input.addEventListener('blur',save);
+    }
+  });
+
+  document.querySelectorAll('[data-delete-lot]').forEach(b=>b.addEventListener('click',()=>{
+    if(!confirm('Supprimer ce lot ?'))return;
+    state.projects=state.projects.map(p=>p.id!==b.dataset.projectId?p:{...p,lots:p.lots.filter(l=>l.id!==b.dataset.deleteLot)});
+    saveState();render();
+  }));
+
+  // ── Lot drag-to-reorder ──
+  let dragLotId=null;
+  document.querySelectorAll('[data-drag-lot]').forEach(row=>{
+    row.addEventListener('dragstart',e=>{
+      dragLotId=row.dataset.dragLot;
+      row.style.opacity='0.4';
+      e.dataTransfer.effectAllowed='move';
+    });
+    row.addEventListener('dragend',()=>{
+      row.style.opacity='';
+      dragLotId=null;
+      document.querySelectorAll('[data-drag-lot]').forEach(r=>r.classList.remove('drag-over'));
+    });
+    row.addEventListener('dragover',e=>{
+      e.preventDefault();
+      e.dataTransfer.dropEffect='move';
+      document.querySelectorAll('[data-drag-lot]').forEach(r=>r.classList.remove('drag-over'));
+      row.classList.add('drag-over');
+    });
+    row.addEventListener('drop',e=>{
+      e.preventDefault();
+      const targetId=row.dataset.dragLot;
+      const projectId=row.dataset.projectId;
+      if(!dragLotId||dragLotId===targetId)return;
+      const project=state.projects.find(p=>p.id===projectId);
+      if(!project)return;
+      const lots=[...project.lots];
+      const fromIdx=lots.findIndex(l=>l.id===dragLotId);
+      const toIdx=lots.findIndex(l=>l.id===targetId);
+      if(fromIdx<0||toIdx<0)return;
+      const [moved]=lots.splice(fromIdx,1);
+      lots.splice(toIdx,0,moved);
+      state.projects=state.projects.map(p=>p.id!==projectId?p:{...p,lots});
+      saveState();render();
+    });
+  });
+
+  // Sub picker
+  document.querySelectorAll('.sub-picker').forEach(picker=>{
+    const{pickerLot:lotId,pickerProject:projectId}=picker.dataset;
+    picker.querySelector('[data-picker-toggle]').addEventListener('click',e=>{e.stopPropagation();picker.querySelector('.sub-picker-list').hidden=!picker.querySelector('.sub-picker-list').hidden;});
+    picker.querySelectorAll('[data-picker-value]').forEach(item=>item.addEventListener('click',()=>{
+      updateLot(projectId,lotId,{subcontractorId:item.dataset.pickerValue||null});
+      picker.querySelector('.sub-picker-list').hidden=true;render();
+    }));
+  });
+
+  // Sub management
+  document.querySelectorAll('[data-edit-sub]').forEach(b=>b.addEventListener('click',()=>setState({editingSubId:state.editingSubId===b.dataset.editSub?null:b.dataset.editSub})));
+  document.querySelectorAll('[data-save-sub]').forEach(b=>b.addEventListener('click',()=>{
+    const name=document.getElementById('sub-edit-name')?.value.trim();if(!name)return;
+    state.subcontractors=state.subcontractors.map(s=>s.id!==b.dataset.saveSub?s:{...s,name,phone:document.getElementById('sub-edit-phone')?.value.trim()||'',category:document.getElementById('sub-edit-category')?.value||s.category,color:document.getElementById('sub-edit-color')?.value||s.color});
+    saveState();render();
+  }));
+  document.querySelectorAll('[data-delete-sub]').forEach(b=>b.addEventListener('click',()=>{
+    if(!confirm('Supprimer ce sous-traitant ?'))return;
+    state.subcontractors=state.subcontractors.filter(s=>s.id!==b.dataset.deleteSub);saveState();render();
+  }));
+
+  // Color swatches
+  document.querySelectorAll('#sub-color-swatches .color-swatch').forEach(b=>b.addEventListener('click',()=>{
+    const color=b.dataset.color;
+    b.closest('#sub-color-swatches').querySelectorAll('.color-swatch').forEach(x=>x.classList.remove('selected'));
+    b.classList.add('selected');
+    const h=document.getElementById('sub-edit-color')||document.getElementById('m-sub-color');
+    if(h)h.value=color;
+  }));
+
+  // File input
+  const fi=document.getElementById('file-input');
+  if(fi)fi.addEventListener('change',async e=>{
+    const file=e.target.files[0];if(!file)return;
+    try{const text=file.name.endsWith('.pdf')?await extractPDF(file):await file.text();setState({modalData:{...state.modalData,fileData:text,fileName:file.name}});}
+    catch(err){setState({modalError:'Erreur: '+err.message});}
+  });
+  const uz=document.getElementById('upload-zone');
+  if(uz){
+    uz.addEventListener('dragover',e=>{e.preventDefault();uz.classList.add('dragging');});
+    uz.addEventListener('dragleave',()=>uz.classList.remove('dragging'));
+    uz.addEventListener('drop',async e=>{e.preventDefault();uz.classList.remove('dragging');const file=e.dataTransfer.files[0];if(!file)return;try{const text=file.name.endsWith('.pdf')?await extractPDF(file):await file.text();setState({modalData:{...state.modalData,fileData:text,fileName:file.name}});}catch(err){setState({modalError:'Erreur: '+err.message});}});
+  }
+}
+
+// ─── Actions ──────────────────────────────────────────────────────────────────
+function handleAction(action){
+  if(action==='go-home')setState({view:'home',selectedProjectId:null,expandedLotId:null});
+  if(action==='go-subs')setState({view:'subs'});
+  if(action==='open-settings')setState({modal:'settings',modalError:''});
+
+  if(action==='export-data'){
+    const data=JSON.stringify(state,null,2);
+    const blob=new Blob([data],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    const d=new Date();const tag=`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+    a.href=url;a.download=`planning-chantier-export-${tag}.json`;
+    document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+  }
+
+  if(action==='new-project')setState({modal:'new-project',modalData:{},modalError:''});
+  if(action==='add-lot')setState({modal:'add-lot',modalData:{},modalError:''});
+  if(action==='add-sub')setState({modal:'add-sub',modalData:{},modalError:''});
+  if(action==='import-ai')setState({modal:'import-ai',modalData:{},modalError:'',modalStep:0});
+  if(action==='sort-lots'){
+    state.projects=state.projects.map(p=>{
+      if(p.id!==state.selectedProjectId)return p;
+      const lots=[...(p.lots||[])];
+      lots.sort((a,b)=>(a.startDay??0)-(b.startDay??0));
+      return{...p,lots};
+    });
+    saveState();render();
+  }
+
+  if(action==='create-project'){
+    const name=document.getElementById('m-proj-name')?.value.trim();
+    const startDate=document.getElementById('m-proj-start')?.value;
+    if(!name)return setState({modalError:'Nom requis'});
+    if(!startDate)return setState({modalError:'Date de début requise'});
+    const p={id:genId(),name,startDate,lots:[]};
+    state.projects.push(p);setState({modal:null,view:'project',selectedProjectId:p.id});
+  }
+
+  if(action==='save-lot'){
+    const name=document.getElementById('m-lot-name')?.value.trim();
+    if(!name)return setState({modalError:'Nom du lot requis'});
+    const proj=state.projects.find(p=>p.id===state.selectedProjectId);
+    const startDateVal=document.getElementById('m-lot-start')?.value;
+    const rawOffset=startDateVal?dateToOffset(proj?.startDate,startDateVal):0;
+    const startDay=skipWeekend(proj?.startDate,rawOffset);
+    const lot={id:genId(),name,category:document.getElementById('m-lot-cat')?.value||'autre',description:document.getElementById('m-lot-desc')?.value.trim()||'',startDay,durationDays:Math.max(1,parseInt(document.getElementById('m-lot-dur')?.value)||5),status:'todo',progress:0};
+    state.projects=state.projects.map(p=>{
+      if(p.id!==state.selectedProjectId)return p;
+      const merged=[...(p.lots||[]),lot];
+      merged.sort((a,b)=>(a.startDay??0)-(b.startDay??0));
+      return{...p,lots:merged};
+    });
+    setState({modal:null});
+  }
+
+  if(action==='save-sub'){
+    const name=document.getElementById('m-sub-name')?.value.trim();
+    if(!name)return setState({modalError:'Nom requis'});
+    const sub={id:genId(),name,phone:document.getElementById('m-sub-phone')?.value.trim()||'',category:document.getElementById('m-sub-cat')?.value||'autre',color:document.getElementById('m-sub-color')?.value||SUB_COLORS[state.subcontractors.length%SUB_COLORS.length]};
+    state.subcontractors.push(sub);setState({modal:null});
+  }
+
+  if(action==='save-settings'){
+    const key=document.getElementById('m-api-key')?.value.trim();
+    setState({apiKey:key,modal:null});
+  }
+
+  if(action==='run-ai')runAI();
+
+  if(action==='export-pdf'){
+    const project=state.projects.find(p=>p.id===state.selectedProjectId);
+    if(!project)return;
+    exportPDF(project);
+  }
+}
+
+function exportPDF(project){
+  const lots=project.lots||[];
+  const startDate=new Date(project.startDate);
+  const CHUNK=28; // jours par page calendrier
+
+  // Precompute lot data
+  const lotData=lots.map(lot=>{
+    const startDay=lot.startDay??((lot.startWeek??0)*7);
+    const dur=lot.durationDays??((lot.durationWeeks??1)*6);
+    const segs=calcSegments(startDate,startDay,dur);
+    const active=new Set();let mn=Infinity,mx=-Infinity;
+    segs.forEach(seg=>{for(let d=seg.calStart;d<seg.calStart+seg.calLen;d++){active.add(d);if(d<mn)mn=d;if(d>mx)mx=d;}});
+    const sub=state.subcontractors.find(s=>s.id===lot.subcontractorId);
+    const color=sub?.color||TRADE_COLORS[lot.category]||'#6B7280';
+    return{lot,active,mn,mx,sub,color};
+  });
+
+  const totalDays=Math.max(...lotData.map(d=>isFinite(d.mx)?d.mx:0),14)+1;
+  const chunks=Math.ceil(totalDays/CHUNK);
+
+  // Generate calendar pages
+  let pagesHtml='';
+  for(let c=0;c<chunks;c++){
+    const dayStart=c*CHUNK;
+    const dayEnd=Math.min(dayStart+CHUNK,totalDays);
+
+    // Only keep lots that have at least one active day in this chunk
+    const pageLots=lotData.filter(({active})=>{
+      for(let d=dayStart;d<dayEnd;d++){if(active.has(d))return true;}
+      return false;
+    });
+
+    // Header columns for this page only
+    const pageHeaders=pageLots.map(({lot,sub,color})=>{
+      const sc=STATUS_CONFIG[lot.status||'todo'];
+      return `<th style="border:1px solid #ddd;padding:4px 3px;text-align:center;vertical-align:bottom;background:#f8f8f8;font-size:9px;min-width:60px;max-width:90px;word-break:break-word;line-height:1.2">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+          <span style="width:8px;height:8px;border-radius:50%;background:${color};display:inline-block"></span>
+          <span style="font-weight:700">${esc(abbrevLot(lot.name))}</span>
+          ${sub?`<span style="color:#888;font-size:8px">${esc(abbrevSub(sub.name))}</span>`:''}
+          <span style="font-size:8px;color:${sc.cls.includes('done')?'#16A34A':sc.cls.includes('progress')?'#1C4CE8':sc.cls.includes('delayed')?'#EA580C':'#888'}">${sc.dot} ${sc.label}</span>
+        </div>
+      </th>`;
+    }).join('');
+
+    let rows='';
+    for(let day=dayStart;day<dayEnd;day++){
+      const d=addDays(startDate,day);
+      const dow=d.getDay();const isWE=dow===0||dow===6;
+      const label=`${DAYS[dow]} ${d.getDate()} ${MONTHS[d.getMonth()]}`;
+      const rowBg=isWE?'background:#f3f4f6;color:#9ca3af;font-style:italic;':'';
+      const cells=pageLots.map(({active,mn,mx,color})=>{
+        const isFirst=day===mn,isLast=day===mx;
+        const r=isFirst&&isLast?'3px':isFirst?'3px 0 0 3px':isLast?'0 3px 3px 0':'0';
+        return `<td style="border:1px solid #e5e5e5;padding:1px 2px;${isWE?'background:#f3f4f6':''}">
+          ${!isWE&&active.has(day)?`<div style="height:14px;background:${color};border-radius:${r};opacity:0.85"></div>`:''}
+        </td>`;
+      }).join('');
+      rows+=`<tr style="${rowBg}"><td style="border:1px solid #ddd;padding:2px 6px;white-space:nowrap;font-size:9px;font-weight:${isWE?'400':'600'};background:${isWE?'#f3f4f6':'#fff'}">${label}</td>${cells}</tr>`;
+    }
+    pagesHtml+=`<div style="page-break-after:${c<chunks-1?'always':'avoid'}">
+      <div style="font-size:11px;font-weight:700;margin-bottom:6px;color:#333">${esc(project.name)} — Planning prévisionnel ${c>0?`(suite ${c+1}/${chunks})`:''}${c===0?` · Début: ${fmtFull(project.startDate)}`:''}</div>
+      <table style="border-collapse:collapse;width:100%;table-layout:fixed;font-family:sans-serif">
+        <thead><tr><th style="border:1px solid #ddd;padding:4px 6px;background:#f8f8f8;font-size:9px;min-width:80px;text-align:left">Date</th>${pageHeaders}</tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+  }
+
+  // Recap per sub
+  const subIds=[...new Set(lots.map(l=>l.subcontractorId).filter(Boolean))];
+  let recapHtml='';
+  if(subIds.length){
+    recapHtml=`<div style="page-break-before:always">
+      <h2 style="font-size:13px;font-weight:700;margin-bottom:12px;border-bottom:2px solid #333;padding-bottom:4px">Récapitulatif par sous-traitant</h2>
+      ${subIds.map(sid=>{
+        const sub=state.subcontractors.find(s=>s.id===sid);if(!sub)return'';
+        const color=sub.color||'#6B7280';
+        const subLots=lots.filter(l=>l.subcontractorId===sid);
+        return `<div style="margin-bottom:16px">
+          <div style="font-size:11px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:6px">
+            <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${color}"></span>
+            ${esc(sub.name)}${sub.phone?` · <span style="font-weight:400;color:#666">${esc(sub.phone)}</span>`:''}
+          </div>
+          <table style="width:100%;border-collapse:collapse;font-size:9px">
+            <thead><tr style="background:#f8f8f8">
+              <th style="border:1px solid #ddd;padding:4px 6px;text-align:left">Tâche</th>
+              <th style="border:1px solid #ddd;padding:4px 6px;text-align:left">Description</th>
+              <th style="border:1px solid #ddd;padding:4px 6px;text-align:left;white-space:nowrap">Début</th>
+              <th style="border:1px solid #ddd;padding:4px 6px;text-align:left">Durée</th>
+              <th style="border:1px solid #ddd;padding:4px 6px;text-align:left">Statut</th>
+              <th style="border:1px solid #ddd;padding:4px 6px;text-align:left;color:#EF4444">Vigilance</th>
+            </tr></thead>
+            <tbody>${subLots.map(lot=>{
+              const sd=lot.startDay??((lot.startWeek??0)*7);
+              const dur=lot.durationDays??((lot.durationWeeks??1)*6);
+              const sc=STATUS_CONFIG[lot.status||'todo'];
+              return `<tr>
+                <td style="border:1px solid #e5e5e5;padding:3px 6px;font-weight:600">${esc(lot.name)}</td>
+                <td style="border:1px solid #e5e5e5;padding:3px 6px">${esc(lot.description||'')}</td>
+                <td style="border:1px solid #e5e5e5;padding:3px 6px;white-space:nowrap">${fmtShort(addDays(project.startDate,sd))}</td>
+                <td style="border:1px solid #e5e5e5;padding:3px 6px">${dur}j</td>
+                <td style="border:1px solid #e5e5e5;padding:3px 6px">${sc.dot} ${sc.label}${lot.progress?' · '+lot.progress+'%':''}</td>
+                <td style="border:1px solid #e5e5e5;padding:3px 6px;color:#EF4444">${lot.vigilance?'⚠ '+esc(lot.vigilance):''}</td>
+              </tr>`;}).join('')}
+            </tbody>
+          </table>
+        </div>`;}).join('')}
+    </div>`;
+  }
+
+  const win=window.open('','_blank');if(!win)return;
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Planning ${esc(project.name)}</title>
+  <style>
+    *{box-sizing:border-box;}
+    body{font-family:-apple-system,sans-serif;margin:0;padding:10mm;}
+    @page{size:A3 landscape;margin:8mm;}
+    tr{page-break-inside:avoid;}
+    #pdf-tip{background:#1C4CE8;color:#fff;padding:14px 20px;margin-bottom:16px;border-radius:8px;font-size:13px;display:flex;align-items:center;gap:16px;}
+    #pdf-tip strong{font-size:15px;display:block;margin-bottom:2px;}
+    #pdf-tip button{background:#fff;color:#1C4CE8;border:none;border-radius:6px;padding:8px 16px;font-weight:700;cursor:pointer;font-size:13px;white-space:nowrap;}
+    @media print{#pdf-tip{display:none!important;}}
+  </style>
+  </head><body>
+  <div id="pdf-tip">
+    <div style="flex:1"><strong>💾 Télécharger en PDF</strong>Dans la fenêtre qui va s'ouvrir, choisissez <b>« Enregistrer en PDF »</b> comme imprimante (en haut ou en bas de la liste), puis cliquez Enregistrer.</div>
+    <button onclick="window.print()">🖨 Ouvrir l'impression</button>
+  </div>
+  ${pagesHtml}${recapHtml}</body></html>`);
+  win.document.close();
+}
+
+async function runAI(){
+  const project=state.projects.find(p=>p.id===state.selectedProjectId);
+  if(!project||!state.modalData.fileData)return;
+  setState({modalStep:1,modalError:''});
+  try{
+    const prompt=`Tu es un expert en planification de chantier BTP. Analyse ce devis et génère un planning au format JSON.\n\nDocument:\n"""\n${state.modalData.fileData.slice(0,12000)}\n"""\n\nDate de début: ${project.startDate}\n\nRéponds UNIQUEMENT avec un tableau JSON (sans markdown):\n[\n  {\n    "name": "Nom du lot",\n    "category": "gros_oeuvre",\n    "description": "Description courte",\n    "startDay": 0,\n    "durationDays": 6\n  }\n]\n\nRègles: startDay=jours calendaires depuis début, durationDays=jours ouvrés (lun-sam), ordre logique, durées réalistes, 5-20 lots, categories: gros_oeuvre/charpente/couverture/menuiserie/isolation/platrerie/electricite/plomberie/carrelage/peinture/vrd/autre`;
+    const result=await callGeminiRetry(prompt);
+    const raw=result.candidates?.[0]?.content?.parts?.[0]?.text||'';
+    const m=raw.match(/\[[\s\S]*\]/);if(!m)throw new Error('Réponse IA invalide');
+    const lots=JSON.parse(m[0]);if(!Array.isArray(lots)||!lots.length)throw new Error('Aucun lot généré');
+    const newLots=lots.map(l=>({id:genId(),name:l.name||'Sans nom',category:l.category||'autre',description:l.description||'',startDay:skipWeekend(project.startDate,l.startDay??0),durationDays:Math.max(1,l.durationDays??5),status:'todo',progress:0}));
+    state.projects=state.projects.map(p=>{
+      if(p.id!==state.selectedProjectId)return p;
+      const merged=[...(p.lots||[]),...newLots];
+      merged.sort((a,b)=>(a.startDay??0)-(b.startDay??0));
+      return{...p,lots:merged};
+    });
+    setState({modal:null,modalStep:0,activeTab:'calendar'});
+  }catch(e){setState({modalStep:0,modalError:e.message});}
+}
+
+// ─── Boot ─────────────────────────────────────────────────────────────────────
+document.addEventListener('click',()=>{document.querySelectorAll('.sub-picker-list').forEach(l=>{l.hidden=true;});});
+loadState();
+render();
+</script>
+</body>
+</html>
